@@ -91,6 +91,17 @@ Tips voor bestanden die overal afspelen, ook op een iPhone: **MP4 met H.264-vide
 
 **Kijkwijzer:** AL, 6 en 9 zijn zichtbaar voor kinderprofielen. Titels met een hogere leeftijd blijven voor kinderprofielen verborgen.
 
+## 7. E-mail bij een nieuwe registratie
+
+Wil je een mailtje als iemand zich registreert? Gebruik hiervoor [Resend](https://resend.com) (gratis) en het script [`supabase/notify-registration.sql`](supabase/notify-registration.sql):
+
+1. Maak een Resend-account met **hetzelfde e-mailadres** waar je de meldingen wilt ontvangen. Het gratis afzenderadres `onboarding@resend.dev` kan alleen naar het adres van je eigen Resend-account mailen.
+2. Maak in Resend onder **API Keys** een key aan met alleen "Sending access". De key begint met `re_`.
+3. Vul de drie waarden bovenin het SQL-script in (in de SQL Editor, niet op GitHub) en draai het.
+4. Test het door je met een tweede e-mailadres te registreren. Komt er niets binnen, kijk dan in je spam en in Resend onder **Emails**.
+
+De gegevens staan versleuteld in Supabase Vault. Mislukt de mail, dan gaat de registratie gewoon door.
+
 ## Veiligheid, eerlijk uitgelegd
 
 - Alleen goedgekeurde leden kunnen titels, video's en voortgang lezen. Dit wordt afgedwongen in de database (Row Level Security), niet alleen in de website.
