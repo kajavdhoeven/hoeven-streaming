@@ -145,6 +145,7 @@
 .st-delta.up { color: var(--ok); }
 .st-delta.down { color: var(--danger); }
 
+.st-dash { display: grid; gap: 18px; }
 .st-dash-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
 .st-area-chart { grid-column: span 8; }
 .st-area-side { grid-column: span 4; display: grid; gap: 18px; align-content: start; }
