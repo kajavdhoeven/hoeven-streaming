@@ -63,8 +63,11 @@ export default {
 
     page.replaceChildren(
       h("div", { class: "st-toolbar" }, h("label", { class: "st-search" }, icon("search"), search), sortSel),
-      chipsEl, listEl, bulk,
+      chipsEl, listEl,
     );
+    // De balk staat los van de pagina, want 'fixed' werkt niet binnen het geanimeerde scherm
+    document.body.appendChild(bulk);
+    scope.add(() => bulk.remove());
 
     /* --- Acties ------------------------------------------------------------------------ */
     async function refresh() {
@@ -207,7 +210,7 @@ export default {
       bulk.replaceChildren(
         h("span", { class: "st-bulk-n" }, `${n} geselecteerd`),
         h("button", { class: "btn btn-sm btn-primary", onClick: () => setStatus(ids, "published") }, icon("play"), "Publiceren"),
-        h("button", { class: "btn btn-sm btn-outline", onClick: () => setStatus(ids, "draft") }, icon("pause"), "Naar concept"),
+        h("button", { class: "btn btn-sm btn-outline", "aria-label": "Naar concept", onClick: () => setStatus(ids, "draft") }, icon("pause"), "Concept"),
         h("button", { class: "btn btn-sm btn-danger", onClick: () => remove(ids) }, icon("trash"), "Verwijderen"),
         h("button", { class: "st-ib", "aria-label": "Selectie wissen", onClick: () => { selected.clear(); render(); } }, icon("x")));
     }

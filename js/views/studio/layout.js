@@ -109,7 +109,7 @@ export function openMenu(anchor, items) {
       e.preventDefault();
       const els = [...menu.querySelectorAll("button:not([disabled])")];
       const i = els.indexOf(document.activeElement);
-      els[(i + (e.key === "ArrowDown" ? 1 : -1) + els.length) % els.length]?.focus();
+      els[(i + (e.key === "ArrowDown" ? 1 : -1) + els.length) % els.length]?.focus({ preventScroll: true });
     }
   };
   document.body.appendChild(menu);
@@ -124,7 +124,7 @@ export function openMenu(anchor, items) {
   window.addEventListener("scroll", close, true);
   window.addEventListener("resize", close);
   openedMenu = close;
-  menu.querySelector("button:not([disabled])")?.focus();
+  menu.querySelector("button:not([disabled])")?.focus({ preventScroll: true });
   return close;
 }
 

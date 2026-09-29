@@ -129,6 +129,8 @@ export default {
     let videos = titleId ? [...episodesOf(titleId)] : [];
     let leaving = false;
     let saving = false;
+    let activeModal = null; // openstaand video-venster, wordt gesloten als je het scherm verlaat
+    let activeCtrl = null;
     const extraGenres = new Set(form.genres.filter((g) => !GENRES.includes(g)));
     const isDirty = () => !leaving && snap() !== savedSnap;
 
@@ -347,7 +349,7 @@ export default {
       const introS = h("input", { class: "input", type: "number", min: 0, inputMode: "numeric", value: f.intro_start ?? "", placeholder: "Start (sec)" });
       const introE = h("input", { class: "input", type: "number", min: 0, inputMode: "numeric", value: f.intro_end ?? "", placeholder: "Einde (sec)" });
       const urlIn = h("input", { class: "input", type: "url", value: f.video_path, placeholder: "https://.../video.mp4 of .m3u8", autocomplete: "off", spellcheck: false });
-      const updDur = () => { durHint.textContent = f.duration_seconds ? `${fmtDuration(f.duration_seconds)}${durationAuto ? " (automatisch bepaald)" : ""}` : "Wordt automatisch bepaald als dat lukt. Je kunt het ook zelf invullen."; };
+      const updDur = () => { durHint.textContent = f.duration_seconds ? `${f.duration_seconds < 60 ? `${f.duration_seconds} sec` : fmtDuration(f.duration_seconds)}${durationAuto ? " (automatisch bepaald)" : ""}` : "Wordt automatisch bepaald als dat lukt. Je kunt het ook zelf invullen."; };
       const setDur = (v, auto) => { f.duration_seconds = v; durationAuto = auto; durIn.value = v ?? ""; updDur(); };
       durIn.addEventListener("input", () => { f.duration_seconds = intOrNull(durIn.value); durationAuto = false; updDur(); });
       updDur();
@@ -443,6 +445,7 @@ export default {
       const okBtn = h("button", { class: "btn btn-gradient", type: "button", onClick: () => submit() }, icon("check"), video ? "Opslaan" : "Toevoegen");
       const modal = openModal({ title: video ? "Video bewerken" : series ? "Aflevering toevoegen" : "Video toevoegen", wide: true, dismissible: false, body: [formEl, upl], footer: [cancelBtn, okBtn] });
       const foot = modal.el.querySelector(".modal-foot");
+      activeModal = modal;
 
       function cancel() {
         lateProbe();
@@ -474,7 +477,7 @@ export default {
         okBtn.classList.add("is-loading");
         try {
           if (f.source === "storage" && file && !uploadedPath) {
-            ctrl = new AbortController();
+            ctrl = activeCtrl = new AbortController();
             upName.textContent = file.name; ring.set(0); upStat.textContent = "Starten...";
             showUpload(true);
             const t0 = performance.now();
@@ -491,7 +494,7 @@ export default {
               showUpload(false);
               if (e?.name === "AbortError") toast("Upload geannuleerd.", "info"); else toast(e.message, "error");
               return;
-            } finally { ctrl = null; }
+            } finally { ctrl = activeCtrl = null; }
             showUpload(false);
           }
           if (f.source === "storage") videoPath = uploadedPath || oldStorage;
@@ -506,9 +509,9 @@ export default {
           for (const p of thumbTrash) if (p !== f.thumb_path) api.studio.removeFiles("artwork", [p]).catch(() => {});
           lateProbe();
           renderVideos();
-          await loadCatalog(true);
           modal.close();
           toast(video ? "Video opgeslagen." : "Video toegevoegd.", "ok");
+          await loadCatalog(true);
         } catch (e) { toast(e.message, "error"); }
         okBtn.classList.remove("is-loading");
       }
@@ -660,6 +663,8 @@ export default {
 
     return async () => {
       scope.dispose();
+      activeCtrl?.abort();
+      activeModal?.close();
       // Niet-opgeslagen uploads opruimen
       for (const k of ["poster_path", "backdrop_path"]) {
         if (form[k] && form[k] !== savedFiles[k] && isStoragePath(form[k])) api.studio.removeFiles("artwork", [form[k]]).catch(() => {});
