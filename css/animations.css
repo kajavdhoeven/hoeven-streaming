@@ -1,0 +1,70 @@
+/* ==========================================================================
+   Hoeven+  -  animaties
+   ========================================================================== */
+
+@keyframes fadeIn      { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fadeOut     { from { opacity: 1 } to { opacity: 0 } }
+@keyframes fadeUp      { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
+@keyframes fadeDown    { from { opacity: 0; transform: translateY(-14px) } to { opacity: 1; transform: none } }
+@keyframes scaleIn     { from { opacity: 0; transform: scale(0.92) } to { opacity: 1; transform: none } }
+@keyframes popIn       { 0% { opacity: 0; transform: scale(0.6) } 70% { opacity: 1; transform: scale(1.06) } 100% { transform: scale(1) } }
+@keyframes slideRight  { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: none } }
+@keyframes slideLeft   { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+@keyframes spin        { to { transform: rotate(360deg) } }
+@keyframes shimmer     { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+@keyframes gradientShift { from { background-position: 0% 50% } to { background-position: 200% 50% } }
+@keyframes pulse       { 0%, 100% { opacity: 1; transform: scale(1) } 50% { opacity: 0.55; transform: scale(0.97) } }
+@keyframes breathe     { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.04) } }
+@keyframes kenburns    { from { transform: scale(1.02) translate3d(0, 0, 0) } to { transform: scale(1.12) translate3d(-1.5%, -1%, 0) } }
+@keyframes floatA      { 0%, 100% { transform: translate3d(0, 0, 0) scale(1) } 50% { transform: translate3d(6vw, -5vh, 0) scale(1.15) } }
+@keyframes floatB      { 0%, 100% { transform: translate3d(0, 0, 0) scale(1.1) } 50% { transform: translate3d(-7vw, 6vh, 0) scale(0.95) } }
+@keyframes floatC      { 0%, 100% { transform: translate3d(0, 0, 0) scale(1) } 50% { transform: translate3d(4vw, 7vh, 0) scale(1.2) } }
+@keyframes dash        { to { stroke-dashoffset: 0 } }
+@keyframes barGrow     { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+@keyframes barGrowX    { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+@keyframes ripple      { from { opacity: 0.5; transform: scale(0.4) } to { opacity: 0; transform: scale(1.8) } }
+@keyframes shake       { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-8px) } 40%, 80% { transform: translateX(8px) } }
+@keyframes bounceIn    { 0% { transform: scale(0.3); opacity: 0 } 50% { transform: scale(1.08); opacity: 1 } 70% { transform: scale(0.96) } 100% { transform: scale(1) } }
+
+/* --- Route-overgang ------------------------------------------------------ */
+.view-enter { animation: fadeUp 0.6s var(--ease) both; }
+.view-enter-soft { animation: fadeIn 0.5s ease both; }
+
+/* Gestaffeld verschijnen: zet --i op het element (0, 1, 2, ...) */
+.stagger { animation: fadeUp 0.7s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms); }
+.stagger-pop { animation: popIn 0.6s var(--ease) both; animation-delay: calc(var(--i, 0) * 80ms); }
+
+/* --- Skeleton / laden ---------------------------------------------------- */
+.skeleton {
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 45%, var(--surface) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: var(--r-md);
+}
+
+.spinner {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.18);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Logo-loader: het logo vult zich met bewegende kleur */
+.loader { display: grid; place-items: center; gap: 18px; }
+.loader .logo-mask { width: min(240px, 60vw); animation: gradientShift 2.2s linear infinite, pulse 2.2s ease-in-out infinite; }
+.loader-bar { width: min(180px, 46vw); height: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.loader-bar::after { content: ""; display: block; height: 100%; width: 40%; border-radius: 3px; background: var(--grad); animation: loaderSlide 1.2s var(--ease-io) infinite; }
+@keyframes loaderSlide { from { transform: translateX(-100%) } to { transform: translateX(250%) } }
+
+.view-loading { min-height: 100dvh; display: grid; place-items: center; animation: fadeIn 0.3s ease both; }
+
+/* --- Reduced motion ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

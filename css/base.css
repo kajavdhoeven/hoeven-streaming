@@ -1,0 +1,143 @@
+/* ==========================================================================
+   Hoeven+  -  basis: tokens, reset, typografie
+   ========================================================================== */
+
+@font-face { font-family: "Poppins"; font-weight: 500; font-style: normal; font-display: swap; src: url("../assets/fonts/poppins-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 600; font-style: normal; font-display: swap; src: url("../assets/fonts/poppins-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 700; font-style: normal; font-display: swap; src: url("../assets/fonts/poppins-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 800; font-style: normal; font-display: swap; src: url("../assets/fonts/poppins-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("../assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("../assets/fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("../assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("../assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+
+:root {
+  /* Kleuren uit het Hoeven+ logo */
+  --c-cyan: #2fbdf5;
+  --c-blue: #3f58c6;
+  --c-purple: #8b4ea2;
+  --c-pink: #d94a72;
+  --c-red: #ea4a3a;
+  --c-orange: #f0492a;
+  --grad: linear-gradient(90deg, var(--c-cyan), var(--c-blue) 22%, var(--c-purple) 42%, var(--c-pink) 62%, var(--c-red) 82%, var(--c-orange));
+  --grad-diag: linear-gradient(135deg, var(--c-cyan), var(--c-blue) 25%, var(--c-purple) 50%, var(--c-pink) 75%, var(--c-orange));
+
+  /* Vlakken */
+  --bg: #07080c;
+  --bg-2: #0c0e15;
+  --surface: #121521;
+  --surface-2: #1a1e2e;
+  --surface-3: #232840;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.16);
+
+  /* Tekst */
+  --text: #f4f5fa;
+  --text-2: #a9aec2;
+  --text-3: #6f7590;
+
+  /* Status */
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+
+  /* Vorm */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --shadow-1: 0 6px 24px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 24px 70px rgba(0, 0, 0, 0.6);
+
+  /* Beweging */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Maten */
+  --nav-h: 68px;
+  --gutter: clamp(16px, 4vw, 56px);
+  --font-display: "Poppins", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+
+  /* Profielkleuren */
+  --av-c1: linear-gradient(135deg, #2fbdf5, #3f58c6);
+  --av-c2: linear-gradient(135deg, #3f58c6, #8b4ea2);
+  --av-c3: linear-gradient(135deg, #8b4ea2, #d94a72);
+  --av-c4: linear-gradient(135deg, #d94a72, #f0492a);
+  --av-c5: linear-gradient(135deg, #f0492a, #fbbf24);
+  --av-c6: linear-gradient(135deg, #10b981, #2fbdf5);
+  --av-c7: linear-gradient(135deg, #a855f7, #2fbdf5);
+  --av-c8: linear-gradient(135deg, #64748b, #1e293b);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  color-scheme: dark;
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+body.no-scroll { overflow: hidden; }
+
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+img, video, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+::selection { background: rgba(139, 78, 162, 0.55); color: #fff; }
+[hidden] { display: none !important; }
+
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--c-cyan); outline-offset: 3px; border-radius: 6px; }
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-track { background: transparent; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* App-root */
+#app { min-height: 100vh; min-height: 100dvh; position: relative; }
+#overlay-root { position: relative; z-index: 900; }
+#toast-root { position: fixed; z-index: 2000; left: 0; right: 0; bottom: calc(24px + var(--safe-b)); display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; padding: 0 16px; }
+
+/* Het logo als masker: krijgt de merkgradient, wordt gebruikt bij laden/splash */
+.logo-img { width: 100%; height: auto; }
+.logo-mask {
+  aspect-ratio: 1400 / 316;
+  background: var(--grad);
+  background-size: 200% 100%;
+  -webkit-mask: url("../assets/img/logo.png") center / contain no-repeat;
+  mask: url("../assets/img/logo.png") center / contain no-repeat;
+}
