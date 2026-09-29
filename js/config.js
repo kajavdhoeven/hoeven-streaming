@@ -12,7 +12,7 @@
 
 export const CONFIG = {
   SUPABASE_URL: "",       // bijv. "https://abcdxyz.supabase.co"
-  SUPABASE_ANON_KEY: "",  // de lange "anon public" key
+  SUPABASE_ANON_KEY: "sb_publishable_bj1pdhy6VhnRqvm7l7DC9w_jbqyuj5T",  // publishable key (veilig om openbaar te zijn)
 
   SITE_NAME: "Hoeven+",
 };
