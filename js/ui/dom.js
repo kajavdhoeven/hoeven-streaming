@@ -1,5 +1,19 @@
 /* Kleine DOM-hulpjes: h() maakt elementen, Scope ruimt event listeners op. */
 
+/*
+ * Vangnet: de ingebouwde append/prepend/replaceChildren maken van null, undefined
+ * en false de zichtbare tekst "null". Dit filtert lege waarden eruit en vlakt
+ * geneste lijsten af, zodat je gewoon `cond ? element : null` kunt doorgeven.
+ */
+for (const proto of [Element.prototype, DocumentFragment.prototype]) {
+  for (const name of ["append", "prepend", "replaceChildren"]) {
+    const native = proto[name];
+    proto[name] = function (...nodes) {
+      return native.apply(this, nodes.flat(Infinity).filter((n) => n != null && n !== false && n !== true));
+    };
+  }
+}
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
