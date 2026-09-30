@@ -69,7 +69,7 @@ export default {
     const startAt = ctx.query.t ? +ctx.query.t : rec0 && !rec0.completed && rec0.position_seconds > 5 ? rec0.position_seconds - 2 : 0;
     // YouTube krijgt een adapter die zich als <video> gedraagt, zodat alle bediening hieronder hetzelfde werkt
     const v = isYT
-      ? new YouTubeMedia({ videoId: video.video_path, start: startAt })
+      ? new YouTubeMedia({ videoId: video.video_path, start: startAt, captions: !!prefs.captions })
       : h("video", { class: "pl-video", playsInline: true, preload: "auto", poster: thumbUrl(video, title) || undefined, "webkit-playsinline": "" });
     if (!isYT) v.setAttribute("playsinline", "");
     v.volume = clamp(prefs.volume ?? 1, 0, 1);
@@ -93,6 +93,7 @@ export default {
     const vol = h("input", { class: "pl-vol", type: "range", min: 0, max: 1, step: 0.02, value: v.muted ? 0 : v.volume, "aria-label": "Volume" });
     const time = h("span", { class: "pl-time" }, "0:00 / 0:00");
     const speedBtn = h("button", { class: "pl-btn pl-text-btn", "aria-label": "Afspeelsnelheid", "aria-haspopup": "menu" }, "1x");
+    const ccBtn = isYT ? h("button", { class: `pl-btn pl-cc${prefs.captions ? " is-on" : ""}`, "aria-label": "Ondertiteling", "aria-pressed": String(!!prefs.captions), title: "Ondertiteling (C)" }, icon("captions")) : null;
     const pipBtn = h("button", { class: "pl-btn", "aria-label": "Beeld-in-beeld" }, icon("pip"));
     const fsBtn = h("button", { class: "pl-btn", "aria-label": "Volledig scherm" });
     const nextBtn = nxt ? h("button", { class: "pl-btn", "aria-label": "Volgende aflevering", title: "Volgende aflevering (N)" }, icon("skip-next")) : null;
@@ -138,6 +139,7 @@ export default {
         time,
         h("span", { class: "pl-spacer" }),
         nextBtn,
+        ccBtn,
         h("div", { class: "pl-speedwrap" }, speedBtn, speedMenu),
         document.pictureInPictureEnabled && !isYT ? pipBtn : null,
         fsBtn));
@@ -343,6 +345,16 @@ export default {
     });
 
     /* --------------------------------- bediening --------------------------------- */
+    function toggleCaptions() {
+      if (!isYT) return;
+      const on = !v.captions;
+      v.setCaptions(on);
+      store.set({ captions: on });
+      ccBtn.classList.toggle("is-on", on);
+      ccBtn.setAttribute("aria-pressed", String(on));
+      say(on ? "Ondertiteling aan" : "Ondertiteling uit");
+    }
+    if (ccBtn) scope.on(ccBtn, "click", toggleCaptions);
     scope.on(playBtn, "click", togglePlay);
     scope.on(retryBtn, "click", () => load());
     scope.on(centerBtn, "click", (e) => { e.stopPropagation(); togglePlay(); });
@@ -395,6 +407,7 @@ export default {
       else if (k === "m" || k === "M") on(() => { v.muted = !v.muted; store.set({ muted: v.muted }); say(v.muted ? "Geluid uit" : "Geluid aan"); });
       else if (k === "f" || k === "F") on(toggleFullscreen);
       else if (k === "n" || k === "N") { if (nxt) on(goNext); }
+      else if ((k === "c" || k === "C") && isYT) on(toggleCaptions);
       else if (k === "<" || k === ",") on(() => setSpeed(SPEEDS[Math.max(0, SPEEDS.indexOf(v.playbackRate) - 1)] ?? 1));
       else if (k === ">" || k === ".") on(() => setSpeed(SPEEDS[Math.min(SPEEDS.length - 1, SPEEDS.indexOf(v.playbackRate) + 1)] ?? 1));
       else if (/^[0-9]$/.test(k) && duration) on(() => { v.currentTime = (+k / 10) * duration; });

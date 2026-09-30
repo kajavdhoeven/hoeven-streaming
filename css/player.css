@@ -115,3 +115,8 @@
 .pl.needs-tap .pl-ui { pointer-events: none; }
 .pl.needs-tap .pl-top, .pl.needs-tap .pl-bottom { pointer-events: auto; }
 .pl.needs-tap .pl-bottom { transform: none; }
+
+/* Ondertiteling-knop (YouTube) */
+.pl-cc { position: relative; }
+.pl-cc.is-on { color: var(--c-cyan); }
+.pl-cc.is-on::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--c-cyan); }

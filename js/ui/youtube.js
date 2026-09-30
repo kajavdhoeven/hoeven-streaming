@@ -70,8 +70,9 @@ export function loadYouTubeApi() {
 const STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
 
 export class YouTubeMedia extends EventTarget {
-  constructor({ videoId, start = 0 }) {
+  constructor({ videoId, start = 0, captions = false }) {
     super();
+    this._captions = !!captions;
     this.videoId = videoId;
     this.start = Math.max(0, Math.floor(start));
     this.el = document.createElement("div");
@@ -125,6 +126,7 @@ export class YouTubeMedia extends EventTarget {
             p.setVolume(Math.round(this._volume * 100));
             this._muted ? p.mute() : p.unMute();
             try { p.setPlaybackRate(this._rate); } catch { /* */ }
+            this._applyCaptions();
             this._poll = setInterval(() => this._tick(), 250);
             this._tick();
             resolve();
@@ -149,6 +151,7 @@ export class YouTubeMedia extends EventTarget {
     if (s === STATE.PLAYING) {
       const wasPaused = this._paused;
       this._emit("autoplayok");
+      if (!this._captions) this._applyCaptions(); // YouTube zet ondertiteling soms pas na de start aan
       this._paused = false;
       this._ended = false;
       if (wasPaused) this._emit("play");
@@ -193,6 +196,28 @@ export class YouTubeMedia extends EventTarget {
     if (loaded !== this._loaded) { this._loaded = loaded; this._emit("progress"); }
     if (!this._paused || Math.abs(this._time - this._lastEmit) > 0.05) this._emit("timeupdate");
     this._lastEmit = this._time;
+  }
+
+  /**
+   * Ondertiteling (standaard uit). De captions-module is niet officieel gedocumenteerd
+   * en kan dus een keer veranderen; daarom altijd in een try/catch.
+   */
+  setCaptions(on) { this._captions = !!on; this._applyCaptions(); }
+  get captions() { return this._captions; }
+  _applyCaptions() {
+    const p = this._player;
+    if (!p) return;
+    try {
+      if (this._captions) {
+        p.loadModule?.("captions");
+        const list = p.getOption?.("captions", "tracklist") || [];
+        const nl = list.find((t) => /^nl/i.test(t.languageCode || ""));
+        if (nl) p.setOption?.("captions", "track", { languageCode: nl.languageCode });
+      } else {
+        p.unloadModule?.("captions");
+        p.unloadModule?.("cc");
+      }
+    } catch { /* module bestaat niet (meer): niet erg */ }
   }
 
   /* --- Zelfde eigenschappen als een <video>-element ------------------------------------ */

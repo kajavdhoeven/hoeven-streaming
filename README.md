@@ -144,6 +144,7 @@ De posters vormen het schuine raster bovenaan en de rij **Populair op Hoeven+**.
 | M | Geluid uit of aan |
 | F | Volledig scherm |
 | N | Volgende aflevering |
+| C | Ondertiteling aan of uit (alleen YouTube) |
 | `<` en `>` | Langzamer of sneller |
 | 0 tot 9 | Naar 0 tot 90 procent van de video |
 | Esc | Terug |
