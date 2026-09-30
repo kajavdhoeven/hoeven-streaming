@@ -10,7 +10,7 @@ import { session } from "../../core/session.js";
 import { api } from "../../api/index.js";
 import { cat, loadCatalog, episodesOf, posterUrl, backdropUrl, thumbUrl } from "../../data/catalog.js";
 import { progressRing, isStoragePath, emptyState, deleteTitleFully, probeDuration, ratingBadge } from "./layout.js";
-import { parseYouTubeId, youTubeThumb } from "../../ui/youtube.js";
+import { parseYouTubeId, youTubeIdFromUrl, youTubeThumb } from "../../ui/youtube.js";
 
 const MAX_IMG = 10 * 1024 * 1024;
 const FREE_LIMIT = 50 * 1024 * 1024;
@@ -434,7 +434,16 @@ export default {
       ["dragleave", "drop"].forEach((ev) => dropBox.addEventListener(ev, () => dropBox.classList.remove("is-over")));
       dropBox.addEventListener("drop", (e) => { e.preventDefault(); takeFile(e.dataTransfer.files[0]); });
       let urlTimer;
-      urlIn.addEventListener("input", () => { clearTimeout(urlTimer); urlTimer = setTimeout(() => probeUrl(false), 700); });
+      urlIn.addEventListener("input", () => {
+        // YouTube-link onder "Externe link" geplakt? Dan schakelen we vanzelf naar de bron YouTube.
+        if (youTubeIdFromUrl(urlIn.value)) {
+          ytIn.value = urlIn.value.trim(); urlIn.value = "";
+          f.source = "youtube"; paintSrc(); paintYt();
+          toast("Dat is een YouTube-link. De bron is aangepast naar YouTube.", "info");
+          return;
+        }
+        clearTimeout(urlTimer); urlTimer = setTimeout(() => probeUrl(false), 700);
+      });
       const lateProbe = () => clearTimeout(urlTimer);
 
       function paintSrc() {
@@ -497,6 +506,8 @@ export default {
           if (!videoPath) return bad("Plak een geldige YouTube-link.", ytIn);
         } else if (f.source === "url") {
           videoPath = urlIn.value.trim();
+          const yt = youTubeIdFromUrl(videoPath);
+          if (yt) { f.source = "youtube"; videoPath = yt; } else
           if (!/^https:\/\/\S+$/i.test(videoPath)) return bad("Gebruik een geldige https-link naar de video.", urlIn);
         } else if (!file && !uploadedPath && !oldStorage) return toast("Kies eerst een videobestand, of gebruik een externe link.", "error");
 

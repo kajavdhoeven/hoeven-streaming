@@ -30,6 +30,12 @@ export function parseYouTubeId(input) {
   return null;
 }
 
+/** Alleen voor echte YouTube-links (geen kale id). Herkent een YouTube-link die onder "Externe link" is gezet. */
+export function youTubeIdFromUrl(input) {
+  const s = String(input || "").trim();
+  return /(^|[/.])(youtube\.com|youtu\.be|youtube-nocookie\.com)(\/|$|\?)/i.test(s) ? parseYouTubeId(s) : null;
+}
+
 /** 16:9 voorbeeldplaatje (mqdefault heeft geen zwarte balken). */
 export const youTubeThumb = (id) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
 

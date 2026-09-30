@@ -2,7 +2,7 @@
 
 import { api } from "../api/index.js";
 import { KIDS_RATINGS } from "../ui/format.js";
-import { youTubeThumb } from "../ui/youtube.js";
+import { youTubeThumb, youTubeIdFromUrl } from "../ui/youtube.js";
 
 export const cat = {
   loaded: false,
@@ -19,6 +19,11 @@ export function loadCatalog(force = false) {
   if (cat.loaded && !force) return Promise.resolve(cat);
   if (loading && !force) return loading;
   loading = api.catalog.load().then(({ titles, videos, rows }) => {
+    // Een YouTube-link die als "Externe link" is opgeslagen, behandelen we toch als YouTube
+    videos = videos.map((v) => {
+      const id = v.source === "url" ? youTubeIdFromUrl(v.video_path) : null;
+      return id ? { ...v, source: "youtube", video_path: id } : v;
+    });
     cat.titles = titles;
     cat.byId = new Map(titles.map((t) => [t.id, t]));
     cat.videos = new Map(videos.map((v) => [v.id, v]));
