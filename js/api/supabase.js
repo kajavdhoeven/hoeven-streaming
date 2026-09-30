@@ -13,6 +13,7 @@ const ERRORS = [
   [/Password should be at least/i, "Kies een wachtwoord van minimaal 6 tekens."],
   [/rate limit|too many/i, "Te veel pogingen. Probeer het over een paar minuten opnieuw."],
   [/Maximaal 5 profielen/i, "Je kunt maximaal 5 profielen per account maken."],
+  [/videos_source_check/i, "De database kent YouTube nog niet. Plak supabase/updates.sql in de SQL Editor van Supabase en klik op Run."],
   [/Failed to fetch|NetworkError|Load failed/i, "Geen verbinding met de server. Controleer je internet."],
   [/row-level security|permission denied|Geen toegang/i, "Je hebt hier geen toegang toe."],
   [/Bucket not found/i, "Opslag-bucket niet gevonden. Heb je schema.sql helemaal uitgevoerd?"],

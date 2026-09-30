@@ -14,7 +14,7 @@ import { api, loadScript } from "../api/index.js";
 import { YouTubeMedia, youTubeErrorText } from "../ui/youtube.js";
 import { getVideo, getTitle, nextVideo, thumbUrl, isAvailable, visibleTitles } from "../data/catalog.js";
 import { progressOf, saveProgress } from "../data/userdata.js";
-import { session } from "../core/session.js";
+import { session, isAdmin } from "../core/session.js";
 import { back, navigate } from "../core/router.js";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -117,10 +117,11 @@ export default {
         h("button", { class: "btn btn-primary btn-lg", onClick: () => { endCard.hidden = true; v.currentTime = 0; v.play(); } }, icon("refresh"), "Opnieuw kijken"),
         h("button", { class: "btn btn-ghost btn-lg", onClick: () => back(`/title/${title.id}`) }, "Terug naar titel")));
 
+    const retryBtn = h("button", { class: "btn btn-primary" }, icon("refresh"), "Opnieuw proberen");
     const errorCard = h("div", { class: "pl-error", hidden: true },
       h("div", { class: "empty-icon" }, "⚠️"), h("h3", null, "Afspelen mislukt"), h("p", { class: "muted", id: "pl-err-text" }, "Deze video kan nu niet worden afgespeeld."),
       h("div", { class: "pl-end-actions" },
-        h("button", { class: "btn btn-primary", onClick: () => load() }, icon("refresh"), "Opnieuw proberen"),
+        retryBtn,
         h("button", { class: "btn btn-outline", onClick: () => back(`/title/${title.id}`) }, "Terug")));
 
     const top = h("div", { class: "pl-top" },
@@ -297,7 +298,20 @@ export default {
       lastT = v.currentTime;
       paintProgress();
     });
-    v.addEventListener("durationchange", () => { duration = v.duration || 0; paintProgress(); });
+    v.addEventListener("durationchange", () => {
+      duration = v.duration || 0;
+      paintProgress();
+      // YouTube geeft de duur pas bij het afspelen door: bewaar hem voor beheerders (voor de kaartjes)
+      if (isYT && duration > 0 && !video.duration_seconds && isAdmin()) {
+        video.duration_seconds = Math.round(duration);
+        api.studio.videos.save({ id: video.id, duration_seconds: video.duration_seconds }).catch(() => {});
+      }
+    });
+    if (isYT) {
+      // Start YouTube niet vanzelf (iPhone, strikte browsers)? Laat dan YouTube's eigen knop tikbaar zijn.
+      v.addEventListener("autoplayblocked", () => { stage.classList.add("needs-tap"); say("Tik op de afspeelknop"); });
+      v.addEventListener("autoplayok", () => stage.classList.remove("needs-tap"));
+    }
     v.addEventListener("timeupdate", () => {
       const t = v.currentTime;
       if (!v.paused && !v.seeking && t > lastT && t - lastT < 2) acc += t - lastT;
@@ -330,6 +344,7 @@ export default {
 
     /* --------------------------------- bediening --------------------------------- */
     scope.on(playBtn, "click", togglePlay);
+    scope.on(retryBtn, "click", () => load());
     scope.on(centerBtn, "click", (e) => { e.stopPropagation(); togglePlay(); });
     scope.on(muteBtn, "click", () => { v.muted = !v.muted; if (!v.muted && v.volume === 0) v.volume = 0.6; vol.value = v.muted ? 0 : v.volume; store.set({ muted: v.muted, volume: v.volume }); });
     scope.on(vol, "input", () => { v.volume = +vol.value; v.muted = v.volume === 0; store.set({ volume: v.volume, muted: v.muted }); });
@@ -410,7 +425,7 @@ export default {
       errorCard.hidden = true; stage.classList.add("is-loading");
       try {
         if (isYT) {
-          await v.init();
+          if (v._player) await v.reload(); else await v.init();
           setSpeed(1);
           v.play();
           return;

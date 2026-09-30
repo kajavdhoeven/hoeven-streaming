@@ -108,3 +108,10 @@
 /* YouTube: de iframe vult het scherm; alle klikken gaan naar onze eigen bediening */
 .pl-yt { position: absolute; inset: 0; background: #000; }
 .pl-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+
+/* YouTube startte niet vanzelf: YouTube's eigen afspeelknop moet aangeraakt kunnen worden */
+.pl.needs-tap .pl-yt iframe { pointer-events: auto; }
+.pl.needs-tap .pl-center { display: none; }
+.pl.needs-tap .pl-ui { pointer-events: none; }
+.pl.needs-tap .pl-top, .pl.needs-tap .pl-bottom { pointer-events: auto; }
+.pl.needs-tap .pl-bottom { transform: none; }

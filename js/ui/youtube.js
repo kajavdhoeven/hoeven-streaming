@@ -33,13 +33,15 @@ export function parseYouTubeId(input) {
 /** 16:9 voorbeeldplaatje (mqdefault heeft geen zwarte balken). */
 export const youTubeThumb = (id) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
 
-export const youTubeErrorText = (code) => ({
+export const youTubeErrorText = (code) => `${({
   2: "Deze YouTube-link klopt niet.",
   5: "YouTube kan deze video niet afspelen in deze browser.",
   100: "Deze YouTube-video bestaat niet meer of staat op Privé. Zet hem op 'Niet openbaar vermeld'.",
-  101: "De eigenaar van deze video staat inbedden niet toe. Zet inbedden aan in YouTube Studio.",
-  150: "De eigenaar van deze video staat inbedden niet toe. Zet inbedden aan in YouTube Studio.",
-}[code] || "De YouTube-video kan niet worden afgespeeld.");
+  101: "De eigenaar van deze video staat inbedden niet toe. Zet 'Inbedden toestaan' aan in YouTube Studio.",
+  150: "De eigenaar van deze video staat inbedden niet toe. Zet 'Inbedden toestaan' aan in YouTube Studio.",
+  152: "YouTube laat deze video hier niet zien. Controleer of 'Inbedden toestaan' aanstaat en dat de video niet op Privé staat.",
+  153: "YouTube weigert de video op deze website (configuratiefout). Ververs met Ctrl + F5. Blijft het zo, zet dan 'Inbedden toestaan' aan in YouTube Studio.",
+}[code]) || "De YouTube-video kan niet worden afgespeeld."}${code ? ` (YouTube-fout ${code})` : ""}`;
 
 let apiPromise = null;
 
@@ -140,6 +142,7 @@ export class YouTubeMedia extends EventTarget {
     clearTimeout(this._gestureTimer);
     if (s === STATE.PLAYING) {
       const wasPaused = this._paused;
+      this._emit("autoplayok");
       this._paused = false;
       this._ended = false;
       if (wasPaused) this._emit("play");
@@ -218,16 +221,36 @@ export class YouTubeMedia extends EventTarget {
     this._player?.playVideo();
     // Autoplay geblokkeerd? Dan blijft YouTube stil staan: toon dan de afspeelknop in plaats van de laadanimatie.
     clearTimeout(this._gestureTimer);
-    this._gestureTimer = setTimeout(() => { if (this._paused) this._emit("canplay"); }, 3000);
+    this._gestureTimer = setTimeout(() => {
+      if (!this._paused) return;
+      this._emit("canplay");
+      this._emit("autoplayblocked"); // de kijker moet zelf op YouTube's afspeelknop tikken
+    }, 2500);
     return Promise.resolve();
   }
   pause() { this._player?.pauseVideo(); }
 
-  destroy() {
+  /** Alleen de YouTube-speler afbreken (voor opnieuw proberen). */
+  _teardown() {
     clearInterval(this._poll);
     clearTimeout(this._seekTimer);
     clearTimeout(this._gestureTimer);
     try { this._player?.destroy(); } catch { /* */ }
+    this._player = null;
+    this._paused = true; this._ended = false; this._seeking = false; this._error = null; this._duration = 0;
+    this.el.replaceChildren();
+  }
+
+  /** Opnieuw beginnen, bijvoorbeeld na een fout. */
+  async reload() {
+    this._teardown();
+    this._mount = document.createElement("div");
+    this.el.appendChild(this._mount);
+    await this.init();
+  }
+
+  destroy() {
+    this._teardown();
     this.el.remove();
   }
 }
