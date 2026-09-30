@@ -11,6 +11,7 @@ import { loader } from "../ui/loader.js";
 import { fmtClock, clamp } from "../ui/format.js";
 import { toast } from "../ui/toast.js";
 import { api, loadScript } from "../api/index.js";
+import { YouTubeMedia, youTubeErrorText } from "../ui/youtube.js";
 import { getVideo, getTitle, nextVideo, thumbUrl, isAvailable, visibleTitles } from "../data/catalog.js";
 import { progressOf, saveProgress } from "../data/userdata.js";
 import { session } from "../core/session.js";
@@ -62,8 +63,15 @@ export default {
     const label = title.kind === "series" ? `S${video.season} A${video.episode}: ${video.name}` : video.name !== title.title ? video.name : "";
 
     /* --------------------------------- opbouw --------------------------------- */
-    const v = h("video", { class: "pl-video", playsInline: true, preload: "auto", poster: thumbUrl(video, title) || undefined, "webkit-playsinline": "" });
-    v.setAttribute("playsinline", "");
+    // Waar begint de video? (link met ?t=, of waar je was gebleven)
+    const isYT = video.source === "youtube";
+    const rec0 = progressOf(video.id);
+    const startAt = ctx.query.t ? +ctx.query.t : rec0 && !rec0.completed && rec0.position_seconds > 5 ? rec0.position_seconds - 2 : 0;
+    // YouTube krijgt een adapter die zich als <video> gedraagt, zodat alle bediening hieronder hetzelfde werkt
+    const v = isYT
+      ? new YouTubeMedia({ videoId: video.video_path, start: startAt })
+      : h("video", { class: "pl-video", playsInline: true, preload: "auto", poster: thumbUrl(video, title) || undefined, "webkit-playsinline": "" });
+    if (!isYT) v.setAttribute("playsinline", "");
     v.volume = clamp(prefs.volume ?? 1, 0, 1);
     v.muted = !!prefs.muted;
 
@@ -130,11 +138,11 @@ export default {
         h("span", { class: "pl-spacer" }),
         nextBtn,
         h("div", { class: "pl-speedwrap" }, speedBtn, speedMenu),
-        document.pictureInPictureEnabled ? pipBtn : null,
+        document.pictureInPictureEnabled && !isYT ? pipBtn : null,
         fsBtn));
 
     const ui = h("div", { class: "pl-ui" }, top, centerBtn, bottom);
-    const stage = h("div", { class: "pl is-paused is-loading is-ui" }, v, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, errorCard);
+    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt" : ""}` }, isYT ? v.el : v, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, errorCard);
     root.appendChild(stage);
 
     /* --------------------------------- gedrag --------------------------------- */
@@ -285,9 +293,7 @@ export default {
     /* --------------------------------- video-events --------------------------------- */
     v.addEventListener("loadedmetadata", () => {
       duration = v.duration || 0;
-      const rec = progressOf(video.id);
-      const wanted = ctx.query.t ? +ctx.query.t : rec && !rec.completed && rec.position_seconds > 5 ? rec.position_seconds - 2 : 0;
-      if (wanted > 0 && wanted < duration - 3) v.currentTime = wanted;
+      if (!isYT && startAt > 0 && startAt < duration - 3) v.currentTime = startAt; // YouTube start al op de juiste plek
       lastT = v.currentTime;
       paintProgress();
     });
@@ -317,7 +323,8 @@ export default {
     });
     v.addEventListener("error", () => {
       stage.classList.remove("is-loading");
-      errorCard.querySelector("#pl-err-text").textContent = v.error?.code === 4 ? "Dit bestand kan niet worden afgespeeld (formaat of link niet ondersteund)." : "Er ging iets mis bij het laden van de video. Controleer je verbinding.";
+      errorCard.querySelector("#pl-err-text").textContent = isYT ? youTubeErrorText(v.error?.code)
+        : v.error?.code === 4 ? "Dit bestand kan niet worden afgespeeld (formaat of link niet ondersteund)." : "Er ging iets mis bij het laden van de video. Controleer je verbinding.";
       errorCard.hidden = false;
     });
 
@@ -402,6 +409,12 @@ export default {
     async function load() {
       errorCard.hidden = true; stage.classList.add("is-loading");
       try {
+        if (isYT) {
+          await v.init();
+          setSpeed(1);
+          v.play();
+          return;
+        }
         const media = await api.media.video(video);
         await attachSource(v, media, scope);
         setSpeed(1);
@@ -421,7 +434,7 @@ export default {
       clearTimeout(tapTimer); clearTimeout(hideTimer);
       save();
       if (isFullscreen()) { try { await (document.exitFullscreen?.() || document.webkitExitFullscreen?.()); } catch { /* */ } }
-      try { v.pause(); v.removeAttribute("src"); v.load(); } catch { /* */ }
+      try { if (isYT) v.destroy(); else { v.pause(); v.removeAttribute("src"); v.load(); } } catch { /* */ }
       if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
       scope.dispose();
     };

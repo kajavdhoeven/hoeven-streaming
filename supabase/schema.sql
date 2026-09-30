@@ -145,8 +145,8 @@ create table if not exists public.videos (
   name             text not null,
   description      text,
   thumb_path       text,               -- pad in bucket 'artwork'
-  source           text not null default 'storage' check (source in ('storage', 'url')),
-  video_path       text not null,      -- pad in bucket 'videos' of een volledige URL (mp4 / m3u8)
+  source           text not null default 'storage' check (source in ('storage', 'url', 'youtube')),
+  video_path       text not null,      -- pad in bucket 'videos', een volledige URL (mp4 / m3u8) of een YouTube-id
   duration_seconds int,
   intro_start      int,                -- optioneel: "Intro overslaan" knop
   intro_end        int,
@@ -243,6 +243,10 @@ begin
   end if;
 end;
 $$;
+
+-- Bestaande installaties: YouTube als videobron toestaan
+alter table public.videos drop constraint if exists videos_source_check;
+alter table public.videos add constraint videos_source_check check (source in ('storage', 'url', 'youtube'));
 
 -- Bestaande installaties: kolom voor de openbare voorpagina toevoegen
 alter table public.titles add column if not exists show_on_landing boolean not null default false;

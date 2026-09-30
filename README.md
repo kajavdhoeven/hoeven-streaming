@@ -88,6 +88,20 @@ Ga in de Studio naar **Content > Nieuwe titel**. Vul de gegevens in, upload een 
 - **Uploaden** naar Supabase Storage. Het gratis plan heeft **50 MB per bestand** en **1 GB totaal**. Dat is snel vol; een Pro-plan geeft meer ruimte.
 - **Externe link** naar een `.mp4` of `.m3u8` (HLS)-bestand. Dit is de beste optie voor grote video's. Een gratis mogelijkheid is Cloudflare R2 (een bucket met openbare toegang, of met een eigen domein). De host moet "Range requests" ondersteunen, anders kun je niet spoelen. R2 en Cloudflare Stream doen dat.
 
+### YouTube als videobron (aanrader voor lange video's)
+
+YouTube heeft geen bestandslimiet van 50 MB en verwerkt je video naar alle formaten. In de Studio kies je bij een video de bron **YouTube** en plak je de link. De video speelt dan af in de Hoeven+-speler, met dezelfde bediening, voortgang, hervatten en volgende aflevering als de andere bronnen.
+
+1. Upload de video via [studio.youtube.com](https://studio.youtube.com) en zet de zichtbaarheid op **Niet openbaar vermeld**. Voor video's langer dan 15 minuten moet je YouTube-account eerst geverifieerd zijn met je telefoonnummer.
+2. Laat **Inbedden toestaan** aan staan (bij "Meer opties").
+3. Plak de link in de Studio bij **Bron: YouTube**.
+
+Goed om te weten:
+- **Niet openbaar vermeld is niet privé.** Iedereen met de link kan de video op YouTube zelf bekijken. Video's met zichtbaarheid **Privé** kunnen niet worden afgespeeld op Hoeven+. Gebruik YouTube dus niet voor beelden die echt niemand mag zien.
+- Hoeven+ verbergt de YouTube-bediening en gebruikt een eigen. YouTube kan tijdens pauzeren of aan het eind toch zelf iets tonen. `rel=0` zorgt dat het alleen video's van je eigen kanaal zijn.
+- Er is geen beeld-in-beeld voor YouTube-video's. De speler laadt via `youtube-nocookie.com`.
+- De duur van een YouTube-video wordt bij het afspelen bepaald. Wil je hem al eerder in de kaartjes zien, vul hem dan zelf in.
+
 Tips voor bestanden die overal afspelen, ook op een iPhone: **MP4 met H.264-video en AAC-audio**. Met [HandBrake](https://handbrake.fr) (Windows) kies je preset "Fast 1080p30" en zet je **Web optimized** aan. Zo start de video snel en werkt spoelen soepel.
 
 **Kijkwijzer:** AL, 6 en 9 zijn zichtbaar voor kinderprofielen. Titels met een hogere leeftijd blijven voor kinderprofielen verborgen.
@@ -107,7 +121,7 @@ De gegevens staan versleuteld in Supabase Vault. Mislukt de mail, dan gaat de re
 
 Bezoekers die niet zijn ingelogd zien een voorpagina met uitleg, veelgestelde vragen en knoppen voor Inloggen en Account aanvragen. Er staat standaard **geen enkele titel** op. Jij kiest per titel of hij openbaar mag zijn:
 
-1. Draai **eenmalig** [`supabase/update-landing.sql`](supabase/update-landing.sql) in de SQL Editor (nieuwe installaties hebben dit al in `schema.sql`).
+1. Draai **eenmalig** [`supabase/updates.sql`](supabase/updates.sql) in de SQL Editor (nieuwe installaties hebben dit al in `schema.sql`).
 2. Zet in de Studio bij een titel de schakelaar **Tonen op de openbare voorpagina** aan. Dan zien bezoekers alleen de titel en de poster.
 
 De posters vormen het schuine raster bovenaan en de rij **Populair op Hoeven+**. De volgorde van die rij is de kijktijd van de laatste 14 dagen, daarna uitgelicht en nieuwste. Titels zonder schakelaar (bijvoorbeeld privé-familievideo's) blijven verborgen, ook al staat de poster in een openbare map.

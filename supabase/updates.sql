@@ -1,9 +1,9 @@
 -- ============================================================================
---  Hoeven+  -  update: openbare voorpagina
+--  Hoeven+  -  updates (openbare voorpagina + YouTube als videobron)
 --
---  Draai dit EENMALIG in Supabase > SQL Editor als je het volledige schema al
---  eerder hebt uitgevoerd. (Voor een nieuwe installatie zit dit al in schema.sql.)
---  Veilig om opnieuw te draaien.
+--  Draai dit in Supabase > SQL Editor als je het volledige schema al eerder hebt
+--  uitgevoerd. (Voor een nieuwe installatie zit dit al in schema.sql.)
+--  Veilig om opnieuw te draaien: je kunt het na elke update gewoon nog eens draaien.
 -- ============================================================================
 
 alter table public.titles add column if not exists show_on_landing boolean not null default false;
@@ -23,3 +23,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 grant execute on function public.public_showcase() to anon, authenticated;
+
+-- YouTube als videobron toestaan
+alter table public.videos drop constraint if exists videos_source_check;
+alter table public.videos add constraint videos_source_check check (source in ('storage', 'url', 'youtube'));

@@ -2,6 +2,7 @@
 
 import { api } from "../api/index.js";
 import { KIDS_RATINGS } from "../ui/format.js";
+import { youTubeThumb } from "../ui/youtube.js";
 
 export const cat = {
   loaded: false,
@@ -72,7 +73,7 @@ export function nextVideo(video) {
 
 export const posterUrl = (t) => api.media.artwork(t.poster_path) || api.media.artwork(t.backdrop_path);
 export const backdropUrl = (t) => api.media.artwork(t.backdrop_path) || api.media.artwork(t.poster_path);
-export const thumbUrl = (v, t) => api.media.artwork(v.thumb_path) || (t ? backdropUrl(t) : null);
+export const thumbUrl = (v, t) => api.media.artwork(v.thumb_path) || (v.source === "youtube" ? youTubeThumb(v.video_path) : null) || (t ? backdropUrl(t) : null);
 
 export function searchTitles(list, q) {
   q = q.trim().toLowerCase();

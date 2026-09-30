@@ -10,6 +10,7 @@ import { session } from "../../core/session.js";
 import { api } from "../../api/index.js";
 import { cat, loadCatalog, episodesOf, posterUrl, backdropUrl, thumbUrl } from "../../data/catalog.js";
 import { progressRing, isStoragePath, emptyState, deleteTitleFully, probeDuration, ratingBadge } from "./layout.js";
+import { parseYouTubeId, youTubeThumb } from "../../ui/youtube.js";
 
 const MAX_IMG = 10 * 1024 * 1024;
 const FREE_LIMIT = 50 * 1024 * 1024;
@@ -258,7 +259,7 @@ export default {
     function videoRow(v, i) {
       const series = form.kind === "series";
       const thumb = thumbUrl(v, form);
-      const meta = [v.duration_seconds ? fmtDuration(v.duration_seconds) : null, v.source === "url" ? "Externe link" : "Geüpload", v.intro_end != null ? "Intro-knop" : null].filter(Boolean);
+      const meta = [v.duration_seconds ? fmtDuration(v.duration_seconds) : null, v.source === "youtube" ? "YouTube" : v.source === "url" ? "Externe link" : "Geüpload", v.intro_end != null ? "Intro-knop" : null].filter(Boolean);
       const sameSeason = videos.filter((x) => x.season === v.season);
       const pos = sameSeason.indexOf(v);
       return h("li", { class: "st-vrow stagger", style: { "--i": Math.min(i, 8) } },
@@ -335,6 +336,7 @@ export default {
         season: season0, episode: video?.episode ?? (Math.max(0, ...videos.filter((v) => v.season === season0).map((v) => v.episode)) + 1),
         thumb_path: video?.thumb_path || null, source: video?.source || "storage",
         video_path: video?.source === "url" ? video.video_path : "",
+        youtube: video?.source === "youtube" ? `https://youtu.be/${video.video_path}` : "",
         duration_seconds: video?.duration_seconds ?? null, intro_start: video?.intro_start ?? null, intro_end: video?.intro_end ?? null,
       };
       const oldStorage = video?.source === "storage" ? video.video_path : null;
@@ -364,11 +366,26 @@ export default {
         discard: (p) => { if (!isStoragePath(p)) return; if (video && p === video.thumb_path) thumbTrash.add(p); else api.studio.removeFiles("artwork", [p]).catch(() => {}); } });
 
       /* Bron: uploaden of externe link */
-      const srcSeg = h("div", { class: "seg", role: "radiogroup", "aria-label": "Bron" }, [["storage", "Uploaden"], ["url", "Externe link"]].map(([v, l]) =>
+      const srcSeg = h("div", { class: "seg", role: "radiogroup", "aria-label": "Bron" }, [["storage", "Uploaden"], ["youtube", "YouTube"], ["url", "Externe link"]].map(([v, l]) =>
         h("button", { type: "button", role: "radio", dataset: { v }, onClick: () => { f.source = v; paintSrc(); } }, l)));
       const fileInput = h("input", { type: "file", accept: "video/*,.mp4,.m4v,.mov,.webm,.mkv", hidden: true, tabIndex: -1 });
       const dropBox = h("div", { class: "st-vdrop", role: "button", tabIndex: 0, "aria-label": "Videobestand kiezen" });
       const srcStorage = h("div", { class: "st-src" }, dropBox, fileInput);
+      const ytIn = h("input", { class: "input", type: "text", value: f.youtube, placeholder: "https://youtu.be/... of https://www.youtube.com/watch?v=...", autocomplete: "off", spellcheck: false });
+      const ytPrev = h("div", { class: "st-yt-prev", hidden: true });
+      const paintYt = () => {
+        const id = parseYouTubeId(ytIn.value);
+        ytPrev.hidden = !id;
+        ytIn.classList.toggle("is-error", !!ytIn.value.trim() && !id);
+        if (id) ytPrev.replaceChildren(h("img", { src: youTubeThumb(id), alt: "", loading: "lazy" }), h("span", null, icon("check-circle"), "YouTube-video herkend"));
+      };
+      ytIn.addEventListener("input", paintYt);
+      paintYt();
+      const srcYt = h("div", { class: "st-src" },
+        field("Link naar de YouTube-video", ytIn, "Plak de link uit de adresbalk of via Delen."),
+        ytPrev,
+        h("div", { class: "st-tip-box" }, icon("info"),
+          h("p", null, "Zet de video op YouTube op 'Niet openbaar vermeld'. Dan staat hij niet in zoekresultaten, maar iedereen met de link kan hem op YouTube zelf wel bekijken. Video's die op 'Privé' staan, kunnen niet worden afgespeeld. Zet 'Inbedden toestaan' aan. De duur wordt bij het afspelen bepaald, je kunt hem hieronder ook invullen.")));
       const srcUrl = h("div", { class: "st-src" },
         field("Link naar de video", urlIn, "Een directe link naar een .mp4 of .m3u8 (HLS)."),
         h("div", { class: "st-tip-box" }, icon("info"),
@@ -423,6 +440,7 @@ export default {
       function paintSrc() {
         srcSeg.querySelectorAll("button").forEach((b) => { const on = b.dataset.v === f.source; b.classList.toggle("is-active", on); b.setAttribute("aria-checked", on); });
         srcStorage.hidden = f.source !== "storage";
+        srcYt.hidden = f.source !== "youtube";
         srcUrl.hidden = f.source !== "url";
         paintDrop();
       }
@@ -444,7 +462,7 @@ export default {
             h("summary", null, "Intro overslaan (optioneel)"),
             h("p", { class: "hint" }, "Toont een knop 'Intro overslaan' tussen deze twee momenten."),
             h("div", { class: "field-row st-two" }, field("Intro begint (sec)", introS), field("Intro eindigt (sec)", introE)))),
-        h("div", { class: "st-vm-side" }, thumbField.el, h("div", { class: "field" }, h("span", { class: "label" }, "Bron van de video"), srcSeg, srcStorage, srcUrl)));
+        h("div", { class: "st-vm-side" }, thumbField.el, h("div", { class: "field" }, h("span", { class: "label" }, "Bron van de video"), srcSeg, srcStorage, srcYt, srcUrl)));
 
       const cancelBtn = h("button", { class: "btn btn-outline", type: "button", onClick: () => cancel() }, "Annuleren");
       const okBtn = h("button", { class: "btn btn-gradient", type: "button", onClick: () => submit() }, icon("check"), video ? "Opslaan" : "Toevoegen");
@@ -474,7 +492,10 @@ export default {
         if (f.intro_start != null && f.intro_end != null && f.intro_end <= f.intro_start) return bad("De intro moet eindigen na het begin.", introE);
         if ((f.intro_start != null) !== (f.intro_end != null)) return bad("Vul zowel het begin als het einde van de intro in, of laat beide leeg.", f.intro_start == null ? introS : introE);
         let videoPath;
-        if (f.source === "url") {
+        if (f.source === "youtube") {
+          videoPath = parseYouTubeId(ytIn.value);
+          if (!videoPath) return bad("Plak een geldige YouTube-link.", ytIn);
+        } else if (f.source === "url") {
           videoPath = urlIn.value.trim();
           if (!/^https:\/\/\S+$/i.test(videoPath)) return bad("Gebruik een geldige https-link naar de video.", urlIn);
         } else if (!file && !uploadedPath && !oldStorage) return toast("Kies eerst een videobestand, of gebruik een externe link.", "error");
