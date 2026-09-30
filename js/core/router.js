@@ -136,6 +136,7 @@ async function handle() {
       if (my !== token) return;
     }
     await destroyOverlay();
+    if (my !== token) return;
     const el = h("div", { class: "overlay-layer" });
     overlayEl.appendChild(el);
     overlay = { route: found.route, ctx, el, cleanup: null };
@@ -154,19 +155,21 @@ async function handle() {
 }
 
 async function mountBase(route, ctx, my, { animate = true } = {}) {
-  const sameRoute = current && current.route === route && lastBaseHash === location.hash;
+  // Alleen overslaan als dit scherm al helemaal is opgebouwd; een nog lopende (mogelijk afgebroken) opbouw telt niet
+  const sameRoute = current && current.ready && current.route === route && lastBaseHash === location.hash;
   if (sameRoute) return;
   await destroyCurrent();
   if (my !== token) return;
 
   const layout = await ensureLayout(route.layout || "bare");
+  if (my !== token) return; // intussen is er al een nieuwere navigatie: niets meer aanpassen
   layout.update?.(ctx);
   const main = layout.main;
   clear(main);
   const holder = h("div", { class: `route-holder${animate ? " view-enter" : ""}`, dataset: { route: route.name || route.path } });
   main.appendChild(holder);
   holder.appendChild(h("div", { class: "view-loading", style: { minHeight: route.layout === "app" ? "60vh" : "100dvh", background: "transparent" } }, loader({ bar: false })));
-  current = { route, ctx, cleanup: null };
+  current = { route, ctx, cleanup: null, ready: false };
   lastBaseHash = location.hash;
   window.scrollTo(0, 0);
 
@@ -177,6 +180,7 @@ async function mountBase(route, ctx, my, { animate = true } = {}) {
     const cleanup = await (mod.default || mod).mount(holder, ctx);
     if (my !== token) { try { await cleanup?.(); } catch { /* */ } return; }
     current.cleanup = cleanup;
+    current.ready = true;
   } catch (e) {
     console.error(e);
     if (my === token) errorView(holder, e, () => { lastBaseHash = null; handle(); });

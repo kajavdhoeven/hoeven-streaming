@@ -119,6 +119,7 @@ create table if not exists public.titles (
   status        text not null default 'draft' check (status in ('draft', 'published', 'coming_soon')),
   release_at    timestamptz,           -- bij 'coming_soon': vanaf dan automatisch kijkbaar
   featured      boolean not null default false,
+  show_on_landing boolean not null default false, -- mag op de openbare voorpagina (zonder inloggen)
   created_by    uuid references public.members (id) on delete set null,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
@@ -241,6 +242,26 @@ begin
       set seconds = public.watch_daily.seconds + excluded.seconds;
   end if;
 end;
+$$;
+
+-- Bestaande installaties: kolom voor de openbare voorpagina toevoegen
+alter table public.titles add column if not exists show_on_landing boolean not null default false;
+
+-- Openbare voorpagina: toont ALLEEN titels waarvoor jij "Tonen op de openbare voorpagina" hebt aangezet,
+-- en alleen titel, soort, jaar, genres en poster. De volgorde is "populair": de meeste kijktijd in de
+-- laatste 14 dagen eerst, daarna uitgelicht en nieuwste.
+create or replace function public.public_showcase()
+returns table (id uuid, title text, kind text, year int, genres text[], poster_path text)
+language sql stable security definer set search_path = public as $$
+  select t.id, t.title, t.kind, t.year, t.genres, t.poster_path
+  from public.titles t
+  where t.show_on_landing and t.status = 'published' and t.poster_path is not null
+  order by
+    coalesce((select sum(w.seconds) from public.watch_daily w
+              where w.title_id = t.id and w.day >= current_date - 14), 0) desc,
+    t.featured desc,
+    t.created_at desc
+  limit 12;
 $$;
 
 -- ----------------------------------------------------------------------------
@@ -383,6 +404,7 @@ grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 revoke all on all tables in schema public from anon;
 grant execute on all functions in schema public to authenticated;
+grant execute on function public.public_showcase() to anon, authenticated; -- voorpagina, ook zonder inloggen
 
 -- ----------------------------------------------------------------------------
 --  8. JIJ ALS ADMIN

@@ -78,7 +78,7 @@ function seedData() {
     T.push({
       id, kind, title: name, tagline: opts.tagline || "", description: opts.description, year: opts.year || 2025,
       genres: opts.genres || [], rating: opts.rating || "AL", poster_path: poster(name, pal, n), backdrop_path: backdrop(pal, n),
-      status: opts.status || "published", release_at: opts.release_at || null, featured: !!opts.featured,
+      status: opts.status || "published", release_at: opts.release_at || null, featured: !!opts.featured, show_on_landing: opts.status !== "draft" && opts.status !== "coming_soon" && !opts.private,
       created_by: "demo-user", created_at: new Date(now - (20 - n) * DAY).toISOString(), updated_at: new Date(now - (20 - n) * DAY).toISOString(),
     });
     eps.forEach((e, i) => V.push({
@@ -266,6 +266,15 @@ export function create() {
           return { url: new URL(mp4 ? "demo/sample.mp4" : "demo/sample.webm", document.baseURI).href, type: "mp4" };
         }
         return { url: p, type: /\.m3u8(\?|$)/i.test(p) ? "hls" : "mp4" };
+      },
+    },
+
+    landing: {
+      async showcase() {
+        await delay(150);
+        return clone(db.titles.filter((t) => t.status === "published" && t.show_on_landing && t.poster_path)
+          .sort((a, b) => (b.featured - a.featured) || (new Date(b.created_at) - new Date(a.created_at))).slice(0, 12)
+          .map(({ id, title, kind, year, genres, poster_path }) => ({ id, title, kind, year, genres, poster_path })));
       },
     },
 

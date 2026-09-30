@@ -12,12 +12,12 @@ export default {
   mount(root, ctx) {
     const scope = new Scope();
     const isReset = ctx.route.name === "reset";
-    let mode = isReset ? "reset" : "login"; // login | register | forgot | reset
+    let mode = isReset ? "reset" : ctx.query.mode === "register" ? "register" : "login"; // login | register | forgot | reset
 
     const wrap = h("div", { class: "auth-wrap" });
     root.appendChild(h("section", { class: "auth" }, aurora(), wrap));
 
-    const logo = h("img", { class: "auth-logo", src: "assets/img/logo.png", alt: "Hoeven+" });
+    const logo = h("a", { class: "auth-logo", href: "#/", "aria-label": "Naar de voorpagina" }, h("img", { src: "assets/img/logo.png", alt: "Hoeven+" }));
 
     function passwordField(id, label, autocomplete, i) {
       const input = h("input", { class: "input", id, type: "password", required: true, minLength: 6, autocomplete, placeholder: "Minimaal 6 tekens" });

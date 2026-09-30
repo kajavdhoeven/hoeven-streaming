@@ -57,7 +57,7 @@ export function openAccountModal() {
 
 export async function logout() {
   await signOut();
-  navigate("/login");
+  navigate("/");
   toast("Tot snel!", "info");
 }
 

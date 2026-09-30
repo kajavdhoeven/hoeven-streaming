@@ -134,6 +134,15 @@ export function create() {
       },
     },
 
+    /** Openbare voorpagina (werkt ook zonder inloggen). */
+    landing: {
+      async showcase() {
+        const { data, error } = await sb.rpc("public_showcase");
+        if (error) { console.warn("Voorpagina-titels niet geladen (is update-landing.sql uitgevoerd?):", error.message); return []; }
+        return data || [];
+      },
+    },
+
     /* --------------------------- Voortgang & lijst ------------------------ */
     userdata: {
       async progress(profileId) {
@@ -171,9 +180,18 @@ export function create() {
         async save(t) {
           const { id, ...fields } = t;
           delete fields.created_at; delete fields.updated_at;
-          if (id) return unwrap(await sb.from("titles").update(fields).eq("id", id).select().single());
-          const { data: u } = await sb.auth.getUser();
-          return unwrap(await sb.from("titles").insert({ ...fields, created_by: u.user?.id }).select().single());
+          const run = async (f) => {
+            if (id) return sb.from("titles").update(f).eq("id", id).select().single();
+            const { data: u } = await sb.auth.getUser();
+            return sb.from("titles").insert({ ...f, created_by: u.user?.id }).select().single();
+          };
+          let res = await run(fields);
+          // Kolom ontbreekt nog (update-landing.sql niet gedraaid)? Opslaan zonder dat veld.
+          if (res.error && /show_on_landing/.test(res.error.message)) {
+            const { show_on_landing, ...rest } = fields;
+            res = await run(rest);
+          }
+          return unwrap(res);
         },
         async remove(id) { unwrap(await sb.from("titles").delete().eq("id", id)); },
       },

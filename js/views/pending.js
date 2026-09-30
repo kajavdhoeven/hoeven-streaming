@@ -34,7 +34,7 @@ export default {
             h("h1", null, "Bijna klaar!"),
             h("p", null, `Je account (${session.member?.email}) is aangemaakt. Zodra de beheerder je heeft goedgekeurd kun je kijken.`)),
           btn,
-          h("button", { class: "auth-link", onClick: async () => { await signOut(); navigate("/login"); } }, "Uitloggen"),
+          h("button", { class: "auth-link", onClick: async () => { await signOut(); navigate("/"); } }, "Uitloggen"),
         ),
       ),
     ));

@@ -121,6 +121,7 @@ export default {
       status: existing?.status || "draft",
       release_at: existing?.release_at || null,
       featured: !!existing?.featured,
+      show_on_landing: !!existing?.show_on_landing,
     };
     const snap = () => JSON.stringify(form);
     let savedSnap = snap();
@@ -219,10 +220,14 @@ export default {
     const releaseField = h("div", { class: "st-release" }, field("Beschikbaar vanaf", releaseIn, "Vanaf dit moment wordt de titel automatisch kijkbaar, zonder dat je iets hoeft te doen."));
     const featuredIn = h("input", { type: "checkbox", checked: form.featured });
     scope.on(featuredIn, "change", () => { form.featured = featuredIn.checked; changed(); });
+    const landingIn = h("input", { type: "checkbox", checked: form.show_on_landing });
+    scope.on(landingIn, "change", () => { form.show_on_landing = landingIn.checked; changed(); });
     const visibility = h("section", { class: "st-card st-ed-card" }, h("h3", null, "Zichtbaarheid"),
       statusSeg, statusNote, releaseField,
       h("label", { class: "switch st-featured" }, featuredIn, h("span", { class: "track" }),
-        h("span", null, h("b", null, "Uitgelicht"), h("small", null, "Komt in de grote hero-carrousel bovenaan de startpagina."))));
+        h("span", null, h("b", null, "Uitgelicht"), h("small", null, "Komt in de grote hero-carrousel bovenaan de startpagina."))),
+      h("label", { class: "switch st-featured" }, landingIn, h("span", { class: "track" }),
+        h("span", null, h("b", null, "Tonen op de openbare voorpagina"), h("small", null, "Bezoekers zonder account zien de poster en titel. Laat dit uit voor privévideo's."))));
 
     /* --- Afbeeldingen ------------------------------------------------------------------------------ */
     const posterField = imageField({ label: "Poster", ratio: "poster", folder: "posters", hint: "Staand (2:3), bijvoorbeeld 1000 x 1500. Max 10 MB.",
@@ -610,7 +615,7 @@ export default {
         const payload = {
           kind: form.kind, title: form.title.trim(), tagline: form.tagline.trim() || null, description: form.description.trim() || null,
           year: form.year, genres: form.genres, rating: form.rating, poster_path: form.poster_path, backdrop_path: form.backdrop_path,
-          status, release_at: status === "coming_soon" ? form.release_at : null, featured: form.featured,
+          status, release_at: status === "coming_soon" ? form.release_at : null, featured: form.featured, show_on_landing: form.show_on_landing,
         };
         if (titleId) payload.id = titleId;
         const wasNew = !titleId;

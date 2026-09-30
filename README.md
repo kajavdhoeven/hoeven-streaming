@@ -9,6 +9,7 @@ Onze eigen streamingdienst voor familie en vrienden. Een Netflix-achtig platform
 ## Wat zit erin
 
 **Voor kijkers**
+- Openbare voorpagina voor bezoekers zonder account, met uitleg over het platform en een populair-rij
 - Intro-animatie, inloggen en registreren (nieuwe accounts moeten door jou worden goedgekeurd)
 - Profielen per account (max. 5) met kleur, symbool en kinderprofiel (alleen Kijkwijzer AL, 6 en 9)
 - Startpagina met uitgelichte carrousel, "Verder kijken", "Mijn lijst", eigen rijen en "Binnenkort"
@@ -102,6 +103,15 @@ Wil je een mailtje als iemand zich registreert? Gebruik hiervoor [Resend](https:
 
 De gegevens staan versleuteld in Supabase Vault. Mislukt de mail, dan gaat de registratie gewoon door.
 
+## 8. Openbare voorpagina
+
+Bezoekers die niet zijn ingelogd zien een voorpagina met uitleg, veelgestelde vragen en knoppen voor Inloggen en Account aanvragen. Er staat standaard **geen enkele titel** op. Jij kiest per titel of hij openbaar mag zijn:
+
+1. Draai **eenmalig** [`supabase/update-landing.sql`](supabase/update-landing.sql) in de SQL Editor (nieuwe installaties hebben dit al in `schema.sql`).
+2. Zet in de Studio bij een titel de schakelaar **Tonen op de openbare voorpagina** aan. Dan zien bezoekers alleen de titel en de poster.
+
+De posters vormen het schuine raster bovenaan en de rij **Populair op Hoeven+**. De volgorde van die rij is de kijktijd van de laatste 14 dagen, daarna uitgelicht en nieuwste. Titels zonder schakelaar (bijvoorbeeld privé-familievideo's) blijven verborgen, ook al staat de poster in een openbare map.
+
 ## Veiligheid, eerlijk uitgelegd
 
 - Alleen goedgekeurde leden kunnen titels, video's en voortgang lezen. Dit wordt afgedwongen in de database (Row Level Security), niet alleen in de website.
@@ -130,14 +140,14 @@ De gegevens staan versleuteld in Supabase Vault. Mislukt de mail, dan gaat de re
 index.html            Startpunt
 _headers              Cloudflare-headers (beveiliging, cache)
 manifest.webmanifest  Installeerbaar als app
-css/                  base, animations, components, views (kijker), player, studio
+css/                  base, animations, components, landing, views (kijker), player, studio
 js/main.js            Opstarten, routes en toegangsregels
 js/config.js          Supabase-gegevens (hier vul je ze in)
 js/api/               supabase.js (echt) en demo.js (voorbeelddata), zelfde interface
 js/core/              router, sessie
 js/data/              catalogus en kijkvoortgang
 js/ui/                bouwstenen (knoppen, modals, kaarten, iconen, ...)
-js/views/             schermen van de kijker + views/studio/ voor de beheerder
+js/views/             voorpagina, schermen van de kijker + views/studio/ voor de beheerder
 supabase/schema.sql   Database, beveiliging en opslag
 vendor/               supabase-js en hls.js (lokaal, geen CDN nodig)
 assets/               logo, iconen, lettertypen

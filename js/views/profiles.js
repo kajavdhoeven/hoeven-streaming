@@ -27,7 +27,7 @@ export default {
     root.appendChild(h("section", { class: "pf" }, aurora(),
       h("div", { class: "pf-top" },
         h("img", { class: "pf-logo", src: "assets/img/logo.png", alt: "Hoeven+" }),
-        h("button", { class: "btn btn-ghost btn-sm", onClick: async () => { await signOut(); navigate("/login"); } }, icon("log-out"), "Uitloggen")),
+        h("button", { class: "btn btn-ghost btn-sm", onClick: async () => { await signOut(); navigate("/"); } }, icon("log-out"), "Uitloggen")),
       title, sub, grid, actions));
 
     async function pick(profile, tile) {

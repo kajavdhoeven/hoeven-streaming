@@ -25,6 +25,7 @@ defineLayout("studio", async (root) => (await import("./views/studio/layout.js")
 
 /* Routes. profile:false = geen profiel nodig, admin:true = alleen beheerders */
 defineRoutes([
+  { path: "/", name: "landing", layout: "bare", profile: false, view: () => import("./views/landing.js") },
   { path: "/login", name: "login", layout: "bare", profile: false, view: () => import("./views/auth.js") },
   { path: "/reset", name: "reset", layout: "bare", profile: false, view: () => import("./views/auth.js") },
   { path: "/pending", name: "pending", layout: "bare", profile: false, view: () => import("./views/pending.js") },
@@ -52,10 +53,10 @@ defineRoutes([
 setGuard((route) => {
   const m = session.member;
   const name = route.name;
-  if (!m) return name === "login" || name === "reset" ? null : "/login";
+  if (!m) return name === "landing" || name === "login" || name === "reset" ? null : "/login";
   if (name === "reset") return null;
   if (!m.approved) return name === "pending" ? null : "/pending";
-  if (name === "login" || name === "pending") return session.profile ? "/browse" : "/profiles";
+  if (name === "login" || name === "pending" || name === "landing") return session.profile ? "/browse" : "/profiles";
   if (route.admin && m.role !== "admin") return "/browse";
   if (route.profile !== false && !session.profile) return "/profiles";
   return null;

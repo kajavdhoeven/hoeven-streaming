@@ -48,7 +48,8 @@
 /* --- Inloggen ------------------------------------------------------------------------ */
 .auth { min-height: 100dvh; display: grid; place-items: center; padding: 28px 20px; position: relative; }
 .auth-wrap { position: relative; z-index: 1; width: min(440px, 100%); display: grid; gap: 28px; justify-items: center; }
-.auth-logo { width: min(240px, 62vw); animation: dropIn 1s var(--ease) both; }
+.auth-logo { display: block; width: min(240px, 62vw); animation: dropIn 1s var(--ease) both; }
+.auth-logo img { width: 100%; height: auto; }
 @keyframes dropIn { from { opacity: 0; transform: translateY(-26px) scale(0.92); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 .auth-card { width: 100%; padding: 30px; border-radius: var(--r-xl); background: rgba(18, 21, 33, 0.68); border: 1px solid var(--line); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); box-shadow: var(--shadow-2); display: grid; gap: 22px; animation: fadeUp 0.9s 0.15s var(--ease) both; }
 .auth-card.is-leaving { animation: cardOut 0.5s var(--ease) forwards; }
