@@ -360,3 +360,76 @@
 .search-hint .chips { max-width: 640px; margin-top: 8px; }
 @media (max-width: 760px) { .search-field { display: flex; } }
 .tm:focus, .tm:focus-visible { outline: none; }
+
+
+/* ==========================================================================
+   Deel 4: mobiel - ruimer, opake balken, veilige zones (iPhone-notch)
+   ========================================================================== */
+
+/* Titelvenster: de bovenkant mag nooit breder worden dan het scherm (sluitknop stond buiten beeld) */
+.tm-hero { width: 100%; min-width: 0; }
+.tm-body, .tm-main { min-width: 0; }
+.tm-resume { min-width: 0; flex: 1 1 140px; max-width: 100%; }
+
+@media (max-width: 760px) {
+  :root { --nav-h: 62px; --gutter: 20px; }
+
+  /* Bovenbalk: gewoon duidelijk. Bovenaan een zacht verloop over de hero, daarna volledig ondoorzichtig. */
+  .nav { height: calc(var(--nav-h) + var(--safe-t)); padding-top: var(--safe-t); padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); background: linear-gradient(180deg, rgba(7, 8, 12, 0.82) 0%, rgba(7, 8, 12, 0.35) 60%, rgba(7, 8, 12, 0) 100%); animation: none; }
+  .nav.is-solid { background: #090a10; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 var(--line), 0 12px 32px rgba(0, 0, 0, 0.45); }
+  .nav-logo img { height: 30px; }
+  .nav-right { gap: 8px; }
+  .nav-search, .nav-search-btn { width: 44px; height: 44px; }
+
+  /* Onderbalk: ondoorzichtig, groter, met ruimte onderaan */
+  .tabbar { background: #0a0b11; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 10px 6px calc(10px + var(--safe-b)); box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.45); }
+  .tab { padding: 6px 0 4px; gap: 5px; font-size: 11.5px; }
+  .tab .icon { font-size: 24px; }
+  .tab.is-active::before { top: -11px; width: 30px; }
+  .app-main { padding-bottom: calc(104px + var(--safe-b)); }
+
+  /* Hero: meer lucht, knoppen en bolletjes niet op de rij eronder */
+  .hero { height: min(78vh, 660px); min-height: 500px; margin-bottom: -20px; }
+  .hero-content { bottom: 104px; gap: 16px; }
+  .hero-title { font-size: clamp(38px, 12vw, 54px); }
+  .hero-dots { bottom: 64px; }
+  .hero-actions { gap: 10px; }
+  .hero-actions .btn { min-height: 48px; }
+  .rows { padding-top: 14px; }
+  .row { margin-bottom: 12px; }
+  .row-head { margin-bottom: 2px; }
+  .row-head h2 { font-size: 20px; }
+  .row-scroller { gap: 14px; padding-bottom: 26px; }
+
+  /* Pagina's met rasters */
+  .pg { padding-top: calc(var(--nav-h) + var(--safe-t) + 28px); gap: 22px; }
+  .pg-head h1 { font-size: 36px; }
+  .pg-sort { width: 100%; }
+  .pg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+
+  /* Titelvenster als schuifpaneel: sluitknop duidelijk en veilig bereikbaar */
+  .tm-backdrop { padding: 0; align-items: flex-end; }
+  .tm { margin-top: calc(var(--safe-t) + 34px); min-height: calc(100dvh - var(--safe-t) - 34px); border-radius: 26px 26px 0 0; }
+  .tm-hero { aspect-ratio: 16 / 10; min-height: 250px; }
+  .tm-close { top: 14px; right: 14px; width: 46px; height: 46px; background: rgba(9, 10, 16, 0.85); }
+  .tm-hero-content { left: 20px; right: 20px; bottom: 22px; gap: 12px; }
+  .tm-title { font-size: clamp(30px, 9.5vw, 44px); }
+  .tm-actions { gap: 12px; }
+  .tm-actions .btn-lg { flex: 1 1 auto; min-width: 0; }
+  .tm-body { padding: 10px 20px calc(40px + var(--safe-b)); gap: 26px; }
+  .tm-similar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Profielen en inloggen */
+  .pf { padding-top: calc(110px + var(--safe-t)); }
+  .pf-top { padding-top: calc(22px + var(--safe-t)); }
+  .auth { padding-top: calc(28px + var(--safe-t)); }
+
+  /* Meldingen boven de onderbalk */
+  #toast-root { bottom: calc(96px + var(--safe-b)); }
+  .announce-pill { top: calc(var(--nav-h) + var(--safe-t) + 10px); }
+}
+
+@media (max-width: 760px) {
+  .tm-hero { aspect-ratio: auto; height: clamp(400px, 62vh, 520px); min-height: 0; }
+}
+.card-tag { background: linear-gradient(90deg, var(--c-pink), var(--c-orange)); animation: none; }

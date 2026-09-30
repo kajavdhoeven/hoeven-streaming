@@ -92,7 +92,11 @@ export class YouTubeMedia extends EventTarget {
     this._error = null;
     this._poll = null;
     this._seekTimer = null;
-    this._gestureTimer = null;
+    this._g1 = null;
+    this._g2 = null;
+    this._state = -1;
+    this._triedMuted = false;
+    this._forcedMute = false;
     this._lastEmit = this.start;
   }
 
@@ -147,10 +151,12 @@ export class YouTubeMedia extends EventTarget {
   _emit(name) { this.dispatchEvent(new Event(name)); }
 
   _onState(s) {
-    clearTimeout(this._gestureTimer);
+    this._state = s;
     if (s === STATE.PLAYING) {
+      clearTimeout(this._g1); clearTimeout(this._g2);
       const wasPaused = this._paused;
       this._emit("autoplayok");
+      if (this._forcedMute) this._tryUnmute();
       if (!this._captions) this._applyCaptions(); // YouTube zet ondertiteling soms pas na de start aan
       this._paused = false;
       this._ended = false;
@@ -243,21 +249,43 @@ export class YouTubeMedia extends EventTarget {
   }
   get volume() { return this._volume; }
   set volume(x) { this._volume = Math.max(0, Math.min(1, x)); this._player?.setVolume?.(Math.round(this._volume * 100)); this._emit("volumechange"); }
-  get muted() { return this._muted; }
+  get muted() { try { if (this._player?.isMuted?.()) return true; } catch { /* */ } return this._muted; }
   set muted(m) { this._muted = !!m; if (this._player?.mute) (this._muted ? this._player.mute() : this._player.unMute()); this._emit("volumechange"); }
   get playbackRate() { return this._rate; }
   set playbackRate(r) { this._rate = r; this._player?.setPlaybackRate?.(r); this._emit("ratechange"); }
 
+  /**
+   * Starten zonder dat de kijker nog eens hoeft te tikken:
+   * 1. gewoon proberen (met geluid), 2. lukt dat niet: gedempt starten (mag overal) en daarna
+   * het geluid proberen aan te zetten, 3. lukt niets: YouTube's eigen knop tikbaar maken.
+   */
   play() {
     this._player?.playVideo();
-    // Autoplay geblokkeerd? Dan blijft YouTube stil staan: toon dan de afspeelknop in plaats van de laadanimatie.
-    clearTimeout(this._gestureTimer);
-    this._gestureTimer = setTimeout(() => {
-      if (!this._paused) return;
+    clearTimeout(this._g1); clearTimeout(this._g2);
+    this._g1 = setTimeout(() => {
+      if (!this._paused || this._state === STATE.BUFFERING || this._triedMuted) return; // speelt of laadt nog
+      this._triedMuted = true;
+      this._forcedMute = true;
+      try { this._player.mute(); this._player.playVideo(); } catch { /* */ }
+    }, 1500);
+    this._g2 = setTimeout(() => {
+      if (!this._paused || this._state === STATE.BUFFERING) return;
       this._emit("canplay");
       this._emit("autoplayblocked"); // de kijker moet zelf op YouTube's afspeelknop tikken
-    }, 2500);
+    }, 5000);
     return Promise.resolve();
+  }
+
+  /** Na gedempt starten: geluid weer aanzetten als de browser dat toestaat, anders de kijker laten tikken. */
+  _tryUnmute() {
+    this._forcedMute = false;
+    if (this._muted) return; // de kijker wilde het geluid uit
+    try { this._player.unMute(); } catch { /* */ }
+    setTimeout(() => {
+      let stillMuted = false;
+      try { stillMuted = this._player.isMuted(); } catch { /* */ }
+      if (stillMuted) { this._emit("needsound"); this._emit("volumechange"); }
+    }, 700);
   }
   pause() { this._player?.pauseVideo(); }
 
@@ -265,7 +293,8 @@ export class YouTubeMedia extends EventTarget {
   _teardown() {
     clearInterval(this._poll);
     clearTimeout(this._seekTimer);
-    clearTimeout(this._gestureTimer);
+    clearTimeout(this._g1); clearTimeout(this._g2);
+    this._triedMuted = false; this._forcedMute = false; this._state = -1;
     try { this._player?.destroy(); } catch { /* */ }
     this._player = null;
     this._paused = true; this._ended = false; this._seeking = false; this._error = null; this._duration = 0;

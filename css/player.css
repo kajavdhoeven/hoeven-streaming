@@ -120,3 +120,31 @@
 .pl-cc { position: relative; }
 .pl-cc.is-on { color: var(--c-cyan); }
 .pl-cc.is-on::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--c-cyan); }
+
+/* --- Schoon laadscherm ------------------------------------------------------------------ */
+.pl-spinner { background: none; }
+.pl-ring-spin { display: block; width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.16); border-top-color: #fff; animation: spin 0.85s linear infinite; }
+
+/* Gordijn over de YouTube-speler: verbergt YouTube's eigen afspeelknop en logo tot de video speelt */
+.pl-curtain { position: absolute; inset: 0; z-index: 1; background: #05060a; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0s 0.5s; pointer-events: none; }
+.pl-curtain img { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(22px) brightness(0.42) saturate(1.1); }
+.pl.is-curtain .pl-curtain { opacity: 1; visibility: visible; transition: none; }
+.pl.is-curtain .pl-spinner { z-index: 2; }
+.pl.is-curtain.is-loading .pl-spinner { display: grid; }
+.pl.is-curtain .pl-center { opacity: 0 !important; pointer-events: none; }
+
+/* Geluid staat nog uit: luidsprekerknop laten pulseren */
+.pl-btn.attn { color: var(--c-cyan); animation: attn 1.2s ease-in-out infinite; }
+@keyframes attn { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(47, 189, 245, 0.55); } 50% { transform: scale(1.12); box-shadow: 0 0 0 10px rgba(47, 189, 245, 0); } }
+
+/* Telefoon: de knoppenrij moet passen. ±10 seconden kan met dubbeltikken links/rechts. */
+@media (max-width: 520px) {
+  .pl-bottom { padding-left: 14px; padding-right: 14px; }
+  .pl-row { gap: 0; }
+  .pl-row .pl-btn[aria-label*="seconden"] { display: none; }
+  .pl-time { margin-left: 4px; font-size: 12.5px; }
+  .pl-text-btn { padding: 0 10px; }
+}
+
+/* Tijdens het laden alleen terugknop en spinner */
+.pl.is-curtain.is-loading .pl-bottom, .pl.is-curtain.is-loading .pl-title { opacity: 0; transition: opacity 0.3s; }

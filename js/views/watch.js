@@ -7,7 +7,6 @@
 
 import { h, Scope } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
-import { loader } from "../ui/loader.js";
 import { fmtClock, clamp } from "../ui/format.js";
 import { toast } from "../ui/toast.js";
 import { api, loadScript } from "../api/index.js";
@@ -75,8 +74,9 @@ export default {
     v.volume = clamp(prefs.volume ?? 1, 0, 1);
     v.muted = !!prefs.muted;
 
-    const spinner = h("div", { class: "pl-spinner" }, loader({ bar: false }));
+    const spinner = h("div", { class: "pl-spinner", role: "status", "aria-label": "Laden" }, h("i", { class: "pl-ring-spin" }));
     const flash = h("div", { class: "pl-flash" });
+    const curtain = isYT ? h("div", { class: "pl-curtain" }, thumbUrl(video, title) ? h("img", { src: thumbUrl(video, title), alt: "", decoding: "async" }) : null) : null;
     const skipL = h("div", { class: "pl-skip left" }, h("span", null));
     const skipR = h("div", { class: "pl-skip right" }, h("span", null));
     const centerBtn = h("button", { class: "pl-center", "aria-label": "Afspelen of pauzeren" });
@@ -145,7 +145,7 @@ export default {
         fsBtn));
 
     const ui = h("div", { class: "pl-ui" }, top, centerBtn, bottom);
-    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt" : ""}` }, isYT ? v.el : v, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, errorCard);
+    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt is-curtain" : ""}` }, isYT ? v.el : v, curtain, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, errorCard);
     root.appendChild(stage);
 
     /* --------------------------------- gedrag --------------------------------- */
@@ -311,8 +311,9 @@ export default {
     });
     if (isYT) {
       // Start YouTube niet vanzelf (iPhone, strikte browsers)? Laat dan YouTube's eigen knop tikbaar zijn.
-      v.addEventListener("autoplayblocked", () => { stage.classList.add("needs-tap"); say("Tik op de afspeelknop"); });
-      v.addEventListener("autoplayok", () => stage.classList.remove("needs-tap"));
+      v.addEventListener("autoplayblocked", () => { stage.classList.remove("is-curtain"); stage.classList.add("needs-tap"); say("Tik op de afspeelknop"); });
+      v.addEventListener("autoplayok", () => { stage.classList.remove("needs-tap"); setTimeout(() => stage.classList.remove("is-curtain"), 150); });
+      v.addEventListener("needsound", needSound);
     }
     v.addEventListener("timeupdate", () => {
       const t = v.currentTime;
@@ -345,6 +346,12 @@ export default {
     });
 
     /* --------------------------------- bediening --------------------------------- */
+    // De browser liet alleen gedempt starten: laat zien dat het geluid nog aan moet
+    function needSound() {
+      say("Geluid staat uit. Tik op het luidsprekertje.");
+      muteBtn.classList.add("attn");
+      showUi();
+    }
     function toggleCaptions() {
       if (!isYT) return;
       const on = !v.captions;
@@ -358,7 +365,7 @@ export default {
     scope.on(playBtn, "click", togglePlay);
     scope.on(retryBtn, "click", () => load());
     scope.on(centerBtn, "click", (e) => { e.stopPropagation(); togglePlay(); });
-    scope.on(muteBtn, "click", () => { v.muted = !v.muted; if (!v.muted && v.volume === 0) v.volume = 0.6; vol.value = v.muted ? 0 : v.volume; store.set({ muted: v.muted, volume: v.volume }); });
+    scope.on(muteBtn, "click", () => { muteBtn.classList.remove("attn"); v.muted = !v.muted; if (!v.muted && v.volume === 0) v.volume = 0.6; vol.value = v.muted ? 0 : v.volume; store.set({ muted: v.muted, volume: v.volume }); });
     scope.on(vol, "input", () => { v.volume = +vol.value; v.muted = v.volume === 0; store.set({ volume: v.volume, muted: v.muted }); });
     scope.on(fsBtn, "click", toggleFullscreen);
     scope.on(pipBtn, "click", async () => { try { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await v.requestPictureInPicture(); } catch { toast("Beeld-in-beeld is niet beschikbaar.", "info"); } });
@@ -436,6 +443,7 @@ export default {
     /* --------------------------------- laden --------------------------------- */
     async function load() {
       errorCard.hidden = true; stage.classList.add("is-loading");
+      if (isYT) stage.classList.add("is-curtain");
       try {
         if (isYT) {
           if (v._player) await v.reload(); else await v.init();
@@ -446,7 +454,10 @@ export default {
         const media = await api.media.video(video);
         await attachSource(v, media, scope);
         setSpeed(1);
-        await v.play().catch(() => { stage.classList.remove("is-loading"); }); // autoplay geblokkeerd: knop tonen
+        await v.play().catch(async () => {
+          // Geblokkeerd met geluid? Gedempt starten mag altijd; de kijker zet het geluid zelf aan.
+          try { v.muted = true; await v.play(); needSound(); } catch { stage.classList.remove("is-loading"); }
+        });
       } catch (e) {
         stage.classList.remove("is-loading");
         errorCard.querySelector("#pl-err-text").textContent = e.message;

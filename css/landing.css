@@ -148,3 +148,11 @@
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; }
 }
+
+
+/* Mobiel: voorpagina-kop ondoorzichtig zodra je scrolt, veilige zones */
+@media (max-width: 760px) {
+  .lp-header { height: calc(68px + var(--safe-t)); padding-top: var(--safe-t); animation: none; }
+  .lp-header.is-solid { background: #090a10; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 var(--line), 0 12px 32px rgba(0, 0, 0, 0.45); }
+  .lp-hero { padding-top: calc(120px + var(--safe-t)); }
+}
