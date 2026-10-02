@@ -94,6 +94,8 @@ export class YouTubeMedia extends EventTarget {
     this._seekTimer = null;
     this._g1 = null;
     this._g2 = null;
+    this._t0 = performance.now();
+    this.log = [];
     this._state = -1;
     this._triedMuted = false;
     this._forcedMute = false;
@@ -126,6 +128,7 @@ export class YouTubeMedia extends EventTarget {
         events: {
           onReady: () => {
             ready = true;
+            this._log("speler klaar");
             const p = this._player;
             p.setVolume(Math.round(this._volume * 100));
             this._muted ? p.mute() : p.unMute();
@@ -138,6 +141,7 @@ export class YouTubeMedia extends EventTarget {
           onStateChange: (e) => this._onState(e.data),
           onPlaybackRateChange: () => { this._rate = this._player.getPlaybackRate(); this.dispatchEvent(new Event("ratechange")); },
           onError: (e) => {
+            this._log(`FOUT ${e.data}`);
             this._error = { code: e.data };
             this.dispatchEvent(new Event("error"));
             if (!ready) reject(new Error(youTubeErrorText(e.data)));
@@ -148,10 +152,18 @@ export class YouTubeMedia extends EventTarget {
   }
 
   /* --- Gebeurtenissen van YouTube vertalen naar <video>-gebeurtenissen ---------------- */
-  _emit(name) { this.dispatchEvent(new Event(name)); }
+  _emit(name) { this._log(`event ${name}`); this.dispatchEvent(new Event(name)); }
+
+  /** Korte log voor de diagnose in de speler (?debug=1 of drie keer op de titel tikken). */
+  _log(msg) {
+    if (/^event (timeupdate|progress|durationchange|volumechange|ratechange)$/.test(msg)) return;
+    this.log.push(`${((performance.now() - this._t0) / 1000).toFixed(1)}s ${msg}`);
+    if (this.log.length > 16) this.log.shift();
+  }
 
   _onState(s) {
     this._state = s;
+    this._log(`YouTube-staat ${s}`);
     if (s === STATE.PLAYING) {
       clearTimeout(this._g1); clearTimeout(this._g2);
       const wasPaused = this._paused;
@@ -263,16 +275,19 @@ export class YouTubeMedia extends EventTarget {
     this._player?.playVideo();
     clearTimeout(this._g1); clearTimeout(this._g2);
     this._g1 = setTimeout(() => {
-      if (!this._paused || this._state === STATE.BUFFERING || this._triedMuted) return; // speelt of laadt nog
+      // Nog niet gestart (ook "laden" telt mee: bij geblokkeerd afspelen blijft YouTube soms eindeloos op laden staan)
+      if (!this._paused || this._triedMuted) return;
+      this._log("niet gestart na 1,5 s: gedempt proberen");
       this._triedMuted = true;
       this._forcedMute = true;
       try { this._player.mute(); this._player.playVideo(); } catch { /* */ }
     }, 1500);
     this._g2 = setTimeout(() => {
-      if (!this._paused || this._state === STATE.BUFFERING) return;
+      if (!this._paused) return;
+      this._log("niet gestart na 6 s: YouTube's eigen knop tonen");
       this._emit("canplay");
       this._emit("autoplayblocked"); // de kijker moet zelf op YouTube's afspeelknop tikken
-    }, 5000);
+    }, 6000);
     return Promise.resolve();
   }
 
@@ -284,6 +299,7 @@ export class YouTubeMedia extends EventTarget {
     setTimeout(() => {
       let stillMuted = false;
       try { stillMuted = this._player.isMuted(); } catch { /* */ }
+      this._log(`geluid terugzetten: ${stillMuted ? "mislukt (kijker moet tikken)" : "gelukt"}`);
       if (stillMuted) { this._emit("needsound"); this._emit("volumechange"); }
     }, 700);
   }

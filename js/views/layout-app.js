@@ -8,6 +8,7 @@ import { toast } from "../ui/toast.js";
 import { profileTransition } from "../ui/transition.js";
 import { session, isAdmin, signOut, activateProfile, leaveProfile } from "../core/session.js";
 import { api } from "../api/index.js";
+import { VERSION } from "../version.js";
 import { navigate, currentPath, parseHash } from "../core/router.js";
 import { setQuery, search, searchBus } from "../core/search-bus.js";
 import { reloadRoute } from "../core/router.js";
@@ -47,6 +48,7 @@ export function openAccountModal() {
         m.role === "admin" ? h("span", { class: "badge ok", style: { marginLeft: "auto" } }, "Beheerder") : null),
       h("div", { class: "field" }, h("label", null, "Wachtwoord"), pw, h("div", null, save)),
       api.mode === "demo" ? h("p", { class: "hint faint" }, "Demo-modus: alle gegevens staan alleen in deze browser.") : null,
+      h("p", { class: "hint faint" }, `Versie ${VERSION}`),
     ],
     footer: [
       h("button", { class: "btn btn-outline", onClick: () => modal.close() }, "Sluiten"),

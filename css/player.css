@@ -148,3 +148,6 @@
 
 /* Tijdens het laden alleen terugknop en spinner */
 .pl.is-curtain.is-loading .pl-bottom, .pl.is-curtain.is-loading .pl-title { opacity: 0; transition: opacity 0.3s; }
+
+/* Diagnose-overlay (?debug=1 of drie keer op de titel tikken) */
+.pl-debug { position: absolute; z-index: 30; left: 8px; right: 8px; top: calc(70px + var(--safe-t)); margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.82); color: #8ff0a4; font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; pointer-events: none; }

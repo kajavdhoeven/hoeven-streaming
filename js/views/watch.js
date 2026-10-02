@@ -15,6 +15,7 @@ import { getVideo, getTitle, nextVideo, thumbUrl, isAvailable, visibleTitles } f
 import { progressOf, saveProgress } from "../data/userdata.js";
 import { session, isAdmin } from "../core/session.js";
 import { back, navigate } from "../core/router.js";
+import { VERSION } from "../version.js";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const HIDE_MS = 3000;
@@ -464,6 +465,34 @@ export default {
         errorCard.hidden = false;
       }
     }
+    /* Diagnose: ?debug=1, of drie keer snel op de titel tikken */
+    let debugBox = null;
+    function toggleDebug() {
+      if (debugBox) { debugBox.remove(); debugBox = null; return; }
+      debugBox = h("pre", { class: "pl-debug" });
+      stage.appendChild(debugBox);
+      const paint = () => {
+        if (!debugBox) return;
+        const lines = [
+          `Hoeven+ ${VERSION} - ${isYT ? "YouTube" : video.source}`,
+          `${v.paused ? "gepauzeerd" : "speelt"} - ${fmtClock(v.currentTime)} / ${fmtClock(duration)} - geluid ${v.muted ? "UIT" : "aan"}`,
+          isYT ? `staat ${v._state} (-1 start, 3 laden, 1 speelt, 2 pauze, 5 klaar) - gordijn ${stage.classList.contains("is-curtain") ? "ja" : "nee"} - tikken ${stage.classList.contains("needs-tap") ? "ja" : "nee"}`
+            : `readyState ${v.readyState} - netwerk ${v.networkState} - fout ${v.error ? v.error.code : "geen"}`,
+          `scherm ${innerWidth}x${innerHeight} - ${navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 70)}`,
+          ...(isYT ? v.log : []),
+        ];
+        debugBox.textContent = lines.join("\n");
+      };
+      paint();
+      scope.interval(paint, 500);
+    }
+    let taps = [];
+    scope.on(top.querySelector(".pl-title"), "pointerup", () => {
+      const now = Date.now(); taps = [...taps.filter((t) => now - t < 900), now];
+      if (taps.length >= 3) { taps = []; toggleDebug(); }
+    });
+    if (ctx.query.debug) toggleDebug();
+
     setIcons();
     load();
     showUi();

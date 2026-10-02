@@ -621,3 +621,18 @@
 .st-yt-prev[hidden] { display: none; }
 .st-yt-prev img { width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: var(--surface-2); }
 .st-yt-prev span { display: inline-flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 600; font-size: 14px; }
+
+/* Mobiel: balken ondoorzichtig (anders schemert de inhoud erdoorheen) en veilige zones voor de notch */
+@media (max-width: 900px) {
+  .st-top { height: calc(var(--st-top) + var(--safe-t)); padding-top: var(--safe-t); background: #090a10; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 var(--line), 0 10px 28px rgba(0, 0, 0, 0.4); }
+  .st-top-logo img { height: 28px; }
+  .st-side { background: #0a0b11; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.45); padding-top: 8px; }
+  .st-editbar { background: #090a10; -webkit-backdrop-filter: none; backdrop-filter: none; padding-top: calc(12px + var(--safe-t)); margin-top: calc((var(--st-pad-y) + var(--safe-t)) * -1); box-shadow: 0 1px 0 var(--line), 0 10px 28px rgba(0, 0, 0, 0.4); }
+  .st-main { padding-bottom: calc(108px + var(--safe-b)); }
+}
+
+@media (max-width: 520px) {
+  .st-top-logo { display: none; }          /* de titel krijgt de ruimte; het Hoeven+-huisje brengt je terug */
+  .st-title { font-size: 20px; }
+  .st-demo { padding: 4px 9px; font-size: 11px; }
+}
