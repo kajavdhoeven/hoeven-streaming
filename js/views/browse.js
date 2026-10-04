@@ -134,7 +134,7 @@ export default {
 
       const avail = all.filter(isAvailable);
       if (!userRows.length) {
-        if (avail.length) out.push(row("Nieuw op Hoeven+", avail.slice(0, 14).map((t, i) => posterCard(t, { index: i }))));
+        if (avail.length) out.push(row("Nieuw op Hoeven+", [...avail].sort((a, b) => (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0)).slice(0, 14).map((t, i) => posterCard(t, { index: i }))));
         const genres = new Map();
         avail.forEach((t) => (t.genres || []).forEach((g) => genres.set(g, [...(genres.get(g) || []), t])));
         for (const [g, ts] of [...genres].filter(([, ts]) => ts.length >= 2).sort((a, b) => b[1].length - a[1].length).slice(0, 4)) {

@@ -6,7 +6,6 @@ import { countdown, fmtDuration, fmtDateShort } from "./format.js";
 import { isUpcoming, posterUrl, backdropUrl, thumbUrl, episodesOf } from "../data/catalog.js";
 import { navigate } from "../core/router.js";
 
-const isNew = (t) => Date.now() - new Date(t.created_at).getTime() < 14 * 86400000;
 
 function image(src, alt) {
   const img = h("img", { src, alt: alt || "", loading: "lazy", decoding: "async", draggable: false });
@@ -23,7 +22,7 @@ export function posterCard(title, { index = 0 } = {}) {
     h("div", { class: "card-poster" },
       image(posterUrl(title), title.title),
       up ? h("div", { class: "card-lock" }, icon("lock"), h("span", null, title.release_at ? `Over ${countdown(title.release_at)}` : "Binnenkort")) : null,
-      !up && isNew(title) ? h("span", { class: "card-tag" }, "Nieuw") : null,
+      !up && title.is_new ? h("span", { class: "card-tag" }, "Nieuw") : null,
       h("div", { class: "card-over" },
         h("strong", { class: "clamp-2" }, title.title),
         h("span", null, up ? (title.release_at ? fmtDateShort(title.release_at) : "Binnenkort") : title.kind === "series" ? `${eps.length} afl.` : fmtDuration(eps[0]?.duration_seconds) || "Film"),

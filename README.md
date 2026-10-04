@@ -126,6 +126,35 @@ Bezoekers die niet zijn ingelogd zien een voorpagina met uitleg, veelgestelde vr
 
 De posters vormen het schuine raster bovenaan en de rij **Populair op Hoeven+**. De volgorde van die rij is de kijktijd van de laatste 14 dagen, daarna uitgelicht en nieuwste. Titels zonder schakelaar (bijvoorbeeld privé-familievideo's) blijven verborgen, ook al staat de poster in een openbare map.
 
+## Studio-extra's
+
+- **Nieuw-label**: zet bij een titel (Studio > Content > titel) de schakelaar **Nieuw-label** aan. De kaart krijgt dan het label "Nieuw" en de titel komt vooraan in "Nieuw op Hoeven+". Je zet hem zelf weer uit. Draai eenmalig `supabase/updates.sql` zodat de database de kolom `is_new` heeft.
+- **Profielpictogrammen**: upload onder Studio > Instellingen > **Profielpictogrammen** plaatjes (ze worden vierkant bijgesneden en verkleind). Kijkers kiezen ze bij het maken of bewerken van een profiel, boven de kleuren en symbolen. Hiervoor is geen extra SQL nodig.
+- **Speler**: bij een serie verschijnt in de laatste 10 seconden rechtsonder "Volgende aflevering" met aftelling en een knop Annuleren (na annuleren gaat hij niet vanzelf door). Bij een film, en bij de laatste aflevering van een serie, verschijnen in de laatste 15 seconden aanbevelingen.
+
+## 9. Mooie e-mails (wachtwoord vergeten en meer)
+
+De mails over wachtwoord resetten, bevestigen en inloggen verstuurt Supabase. De standaardtekst is Engels en kaal. In [`supabase/email-templates/`](supabase/email-templates/) staan Nederlandse templates in de stijl van Hoeven+ (donker, met logo en een kleurrijke knop).
+
+**Templates plakken** (Supabase > Authentication > Emails > Templates, de menunamen kunnen iets afwijken):
+
+| Template in Supabase | Bestand | Onderwerp (Subject) |
+|---|---|---|
+| Reset password | `wachtwoord-vergeten.html` | Kies een nieuw wachtwoord voor Hoeven+ |
+| Confirm sign up | `account-bevestigen.html` | Bevestig je e-mailadres voor Hoeven+ |
+| Magic link | `inloglink.html` | Je inloglink voor Hoeven+ |
+| Invite user | `uitnodiging.html` | Je bent uitgenodigd voor Hoeven+ |
+| Change email address | `e-mailadres-wijzigen.html` | Bevestig je nieuwe e-mailadres voor Hoeven+ |
+
+Open het bestand, kopieer alles, plak het in het vak van de template en vul het onderwerp in. Laat de stukjes tussen `{{ }}` staan: Supabase vult daar het e-mailadres en de link in.
+
+**Twee instellingen die het echt goed maken:**
+
+1. **Site URL**: zet onder Authentication > URL Configuration de **Site URL** op het echte adres van je site (bijvoorbeeld `https://hoeven.jouwdomein.nl`) en zet dat adres ook bij **Redirect URLs**. Het logo in de mail en de link naar de site komen hieruit. Staat hier nog `localhost`, dan kapot je logo en link.
+2. **Eigen afzender (SMTP)**: de standaardmails van Supabase komen van "Supabase Auth" en er mogen maar een paar per uur uit. Zet onder Authentication > SMTP Settings je eigen afzender aan, bijvoorbeeld via Resend (heb je al voor de registratiemelding): host `smtp.resend.com`, poort `465`, gebruikersnaam `resend` en als wachtwoord je Resend API-key. Typ die key alleen in Supabase, nergens anders. Als afzender (Sender email) moet je een adres van een domein gebruiken dat je in Resend hebt geverifieerd, bijvoorbeeld `noreply@jouwdomein.nl`, en als naam `Hoeven+`.
+
+Test het door op de inlogpagina op **Wachtwoord vergeten** te klikken.
+
 ## Veiligheid, eerlijk uitgelegd
 
 - Alleen goedgekeurde leden kunnen titels, video's en voortgang lezen. Dit wordt afgedwongen in de database (Row Level Security), niet alleen in de website.

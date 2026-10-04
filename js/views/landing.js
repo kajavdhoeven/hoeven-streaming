@@ -34,24 +34,33 @@ const FAQ = [
 const COLS = 9;
 const ROWS = 6;
 
+/* Alleen echte posters van jezelf: geen kleurvlakken. Elke poster komt zo ver mogelijk uit de buurt van zichzelf. */
 function mosaic(posters) {
   const n = posters.length;
-  const cols = [];
+  const grid = [];
+  const used = new Array(n).fill(0);
   for (let c = 0; c < COLS; c++) {
-    const tiles = [];
+    grid.push([]);
     for (let r = 0; r < ROWS; r++) {
-      const i = c * ROWS + r;
-      // Met genoeg posters alleen posters, anders afwisselen met kleurvlakken
-      const poster = n >= 6 ? posters[(i * 5) % n] : n && i % 2 === 0 ? posters[(i / 2) % n | 0] : null;
-      tiles.push(h("div", { class: `lp-tile t${(i * 3) % 10}` }, poster ? h("img", { src: api.media.artwork(poster.poster_path), alt: "", loading: "lazy", decoding: "async", draggable: false }) : null));
+      if (!n) { grid[c].push(-1); continue; }
+      const near = [grid[c][r - 1], grid[c][r - 2], grid[c - 1]?.[r], grid[c - 1]?.[r + 1], grid[c - 1]?.[r - 1], grid[c - 2]?.[r]];
+      let best = -1;
+      for (let k = 0; k < n; k++) {
+        const p = (c * 7 + r * 3 + k) % n;      // vaste, lekker door elkaar lopende volgorde
+        if (near.includes(p) && n > near.length) continue;
+        if (best < 0 || used[p] < used[best]) best = p;
+      }
+      if (best < 0) best = (c * 7 + r * 3) % n;
+      used[best]++;
+      grid[c].push(best);
     }
-    cols.push(h("div", { class: "lp-col", style: { "--c": c } }, tiles));
   }
-  return cols;
+  return grid.map((col, c) => h("div", { class: "lp-col", style: { "--c": c } },
+    col.map((p) => h("div", { class: "lp-tile" }, p >= 0 ? h("img", { src: api.media.artwork(posters[p].poster_path), alt: "", loading: "lazy", decoding: "async", draggable: false }) : null))));
 }
 
-function appPreview() {
-  const tile = (i) => h("div", { class: `lp-mini t${i}` });
+function appPreview(posters = []) {
+  const tile = (i) => h("div", { class: `lp-mini${posters.length ? "" : ` t${i}`}` }, posters.length ? h("img", { src: api.media.artwork(posters[i % posters.length].poster_path), alt: "", loading: "lazy", decoding: "async" }) : null);
   return h("div", { class: "lp-mock", "aria-hidden": "true" },
     h("div", { class: "lp-mock-bar" }, h("i"), h("i"), h("i"), h("span", null, "Hoeven+")),
     h("div", { class: "lp-mock-hero" },
@@ -96,13 +105,15 @@ export default {
           h("div", null, h("h3", null, f.title), h("p", null, f.text)),
           h("div", { class: "lp-card-icon" }, icon(f.icon))))));
 
+    const previewHolder = h("div", null, appPreview());
+
     /* Zo ziet het eruit */
     const preview = h("section", { class: "lp-section lp-preview" },
       h("div", { class: "lp-preview-text reveal" },
         h("h2", { class: "lp-h2" }, "Zoals je het kent, maar dan van ons"),
         h("p", { class: "lp-lead" }, "Een grote uitgelichte titel, rijen om doorheen te bladeren en je eigen Verder kijken. Alles is gemaakt voor onze eigen beelden."),
         h("ul", { class: "lp-checks" }, ["Series met seizoenen en afleveringen", "Binnenkort-titels met aftelling", "Zoeken op titel of genre"].map((t) => h("li", null, h("span", null, icon("check")), t)))),
-      h("div", { class: "lp-preview-art reveal", style: { "--i": 1 } }, h("div", { class: "lp-glow" }), appPreview()));
+      h("div", { class: "lp-preview-art reveal", style: { "--i": 1 } }, h("div", { class: "lp-glow" }), previewHolder));
 
     /* Zo werkt het */
     const steps = h("section", { class: "lp-section" },
@@ -173,6 +184,7 @@ export default {
     api.landing.showcase().then((list) => {
       if (!alive || !list.length) return;
       mosaicEl.replaceChildren(...mosaic(list));
+      previewHolder.replaceChildren(appPreview(list));
       const top = list.slice(0, 10);
       rankWrap.replaceChildren(
         h("h2", { class: "lp-h2 reveal" }, "Populair op Hoeven+"),

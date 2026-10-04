@@ -11,7 +11,7 @@ import { fmtClock, clamp } from "../ui/format.js";
 import { toast } from "../ui/toast.js";
 import { api, loadScript } from "../api/index.js";
 import { YouTubeMedia, youTubeErrorText } from "../ui/youtube.js";
-import { getVideo, getTitle, nextVideo, thumbUrl, isAvailable, visibleTitles } from "../data/catalog.js";
+import { getVideo, getTitle, nextVideo, thumbUrl, backdropUrl, isAvailable, visibleTitles, playableTitles, episodesOf } from "../data/catalog.js";
 import { progressOf, saveProgress } from "../data/userdata.js";
 import { session, isAdmin } from "../core/session.js";
 import { back, navigate } from "../core/router.js";
@@ -20,7 +20,8 @@ import { VERSION } from "../version.js";
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const HIDE_MS = 3000;
 const SAVE_MS = 10000;
-const NEXT_COUNTDOWN = 10;
+const NEXT_COUNTDOWN = 10;   // volgende aflevering: pas in de laatste 10 seconden
+const RECS_SECONDS = 15;     // aanbevelingen: laatste 15 seconden van een film (of laatste aflevering)
 
 const store = {
   get() { try { return JSON.parse(localStorage.getItem("hp:player")) || {}; } catch { return {}; } },
@@ -48,6 +49,16 @@ async function attachSource(video, media, scope) {
     }
   }
   video.src = media.url;
+}
+
+/** Andere titels om hierna te kijken: eerst dezelfde genres, daarna uitgelicht/nieuw/recent. */
+function recommendationsFor(title, profile) {
+  const mine = new Set(title.genres || []);
+  return playableTitles(profile)
+    .filter((t) => t.id !== title.id && episodesOf(t.id).length)
+    .map((t) => ({ t, s: (t.genres || []).filter((g) => mine.has(g)).length * 3 + (t.kind === title.kind ? 1 : 0) + (t.featured ? 1 : 0) + (t.is_new ? 1 : 0) }))
+    .sort((a, b) => b.s - a.s || new Date(b.t.created_at) - new Date(a.t.created_at))
+    .slice(0, 4).map((x) => x.t);
 }
 
 export default {
@@ -107,16 +118,35 @@ export default {
     ring.setAttribute("class", "pl-ring");
     ring.innerHTML = '<circle cx="22" cy="22" r="19" class="bg"/><circle cx="22" cy="22" r="19" class="fg"/>';
     const nextCount = h("span", null, String(NEXT_COUNTDOWN));
+    const ringFg = () => ring.querySelector(".fg");
     const nextCard = nxt ? h("div", { class: "pl-float pl-next", hidden: true },
       h("div", { class: "pl-next-ring" }, ring, nextCount),
       h("div", { class: "pl-next-text" }, h("small", null, "Volgende aflevering"), h("strong", { class: "truncate" }, `${nxt.name}`)),
       h("button", { class: "btn btn-primary btn-sm", onClick: () => goNext() }, icon("play", { fill: true }), "Nu kijken"),
       h("button", { class: "btn btn-ghost btn-sm", onClick: () => { nextDismissed = true; hideNext(); } }, "Annuleren")) : null;
 
+    /* Aanbevelingen aan het eind van een film (of de laatste aflevering van een serie) */
+    const recList = nxt ? [] : recommendationsFor(title, session.profile);
+    const recPlay = (t) => {
+      const eps = episodesOf(t.id);
+      const target = eps.find((e) => !progressOf(e.id)?.completed) || eps[0];
+      if (target) navigate(`/watch/${target.id}`, { replace: true }); else navigate(`/title/${t.id}`);
+    };
+    const recs = recList.length ? h("div", { class: "pl-recs", hidden: true },
+      h("div", { class: "pl-recs-head" }, h("strong", null, "Hierna kijken"),
+        h("button", { class: "pl-recs-x", "aria-label": "Aanbevelingen sluiten", onClick: () => { recsDismissed = true; recs.hidden = true; } }, icon("x"))),
+      h("div", { class: "pl-recs-list" }, recList.map((t) =>
+        h("button", { class: "pl-rec", "aria-label": `Kijk ${t.title}`, onClick: () => recPlay(t) },
+          h("span", { class: "pl-rec-img" }, backdropUrl(t) ? h("img", { src: backdropUrl(t), alt: "", loading: "lazy", decoding: "async" }) : null, h("i", null, icon("play", { fill: true }))),
+          h("span", { class: "pl-rec-name truncate" }, t.title),
+          h("small", { class: "truncate" }, [t.kind === "series" ? "Serie" : "Film", t.year].filter(Boolean).join(" - ")))))) : null;
+
+    const endNextBtn = h("button", { class: "btn btn-gradient btn-lg", hidden: true, onClick: () => goNext() }, icon("skip-next"), "Volgende aflevering");
     const endCard = h("div", { class: "pl-end", hidden: true },
       h("h2", null, title.title), h("p", { class: "muted" }, "Je bent klaar met kijken."),
       h("div", { class: "pl-end-actions" },
-        h("button", { class: "btn btn-primary btn-lg", onClick: () => { endCard.hidden = true; v.currentTime = 0; v.play(); } }, icon("refresh"), "Opnieuw kijken"),
+        endNextBtn,
+        h("button", { class: "btn btn-primary btn-lg", onClick: () => { endCard.hidden = true; if (recs) recs.hidden = true; v.currentTime = 0; v.play(); } }, icon("refresh"), "Opnieuw kijken"),
         h("button", { class: "btn btn-ghost btn-lg", onClick: () => back(`/title/${title.id}`) }, "Terug naar titel")));
 
     const retryBtn = h("button", { class: "btn btn-primary" }, icon("refresh"), "Opnieuw proberen");
@@ -146,14 +176,13 @@ export default {
         fsBtn));
 
     const ui = h("div", { class: "pl-ui" }, top, centerBtn, bottom);
-    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt is-curtain" : ""}` }, isYT ? v.el : v, curtain, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, errorCard);
+    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt is-curtain" : ""}` }, isYT ? v.el : v, curtain, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, recs, errorCard);
     root.appendChild(stage);
 
     /* --------------------------------- gedrag --------------------------------- */
     let hideTimer = null;
     let nextDismissed = false;
-    let nextTimer = null;
-    let nextLeft = NEXT_COUNTDOWN;
+    let recsDismissed = false;
     let duration = 0;
     let acc = 0;         // echte kijktijd sinds de laatste keer opslaan
     let lastT = 0;
@@ -279,20 +308,15 @@ export default {
     }
     scope.interval(() => { if (!v.paused) save(); }, SAVE_MS);
 
-    /* Volgende aflevering */
-    function hideNext() { clearInterval(nextTimer); nextTimer = null; if (nextCard) nextCard.hidden = true; }
-    function startNext() {
-      if (!nextCard || nextTimer || nextDismissed) return;
-      nextLeft = NEXT_COUNTDOWN; nextCount.textContent = String(nextLeft);
-      nextCard.hidden = false;
-      ring.style.setProperty("--dur", `${NEXT_COUNTDOWN}s`);
-      ring.classList.remove("go"); void ring.getBoundingClientRect(); ring.classList.add("go");
-      nextTimer = setInterval(() => {
-        nextLeft--; nextCount.textContent = String(Math.max(nextLeft, 0));
-        if (nextLeft <= 0) { hideNext(); goNext(); }
-      }, 1000);
+    /* Volgende aflevering: alleen in de laatste seconden, de ring loopt mee met de echte resttijd */
+    function hideNext() { if (nextCard) nextCard.hidden = true; }
+    function showNext(remaining) {
+      if (!nextCard || nextDismissed) return;
+      if (nextCard.hidden) nextCard.hidden = false;
+      nextCount.textContent = String(Math.max(1, Math.ceil(remaining)));
+      ringFg().style.strokeDashoffset = String(119.4 * clamp(remaining / NEXT_COUNTDOWN, 0, 1));
     }
-    scope.add(() => clearInterval(nextTimer));
+    function hideRecs() { if (recs) recs.hidden = true; }
 
     /* --------------------------------- video-events --------------------------------- */
     v.addEventListener("loadedmetadata", () => {
@@ -323,8 +347,14 @@ export default {
       if (!dragging) paintProgress();
       if (video.intro_end && t >= (video.intro_start ?? 0) && t < video.intro_end - 1) introBtn.hidden = false; else introBtn.hidden = true;
       const remaining = duration - t;
-      if (nxt && duration > 20 && remaining <= Math.min(20, duration * 0.25) && remaining > 0.5) startNext();
-      else if (remaining > Math.min(25, duration * 0.3)) { nextDismissed = false; if (nextTimer || (nextCard && !nextCard.hidden)) hideNext(); }
+      if (nxt && duration > 20) {
+        if (remaining <= NEXT_COUNTDOWN && remaining > 0) showNext(remaining);
+        else if (remaining > NEXT_COUNTDOWN + 1.5) { nextDismissed = false; hideNext(); }
+      }
+      if (recs && duration > 30) {
+        if (remaining <= RECS_SECONDS && remaining > 0) { if (!recsDismissed && recs.hidden) recs.hidden = false; }
+        else if (remaining > RECS_SECONDS + 1.5) { recsDismissed = false; hideRecs(); }
+      }
     });
     v.addEventListener("play", () => { setIcons(); showUi(); requestWake(); ended = false; });
     v.addEventListener("pause", () => { setIcons(); showUi(); if (!v.ended) save(); });
@@ -337,7 +367,11 @@ export default {
     v.addEventListener("ended", async () => {
       ended = true;
       await save();
-      if (nxt) { hideNext(); goNext(); } else { endCard.hidden = false; stage.classList.add("is-ui"); }
+      hideNext();
+      if (nxt && !nextDismissed) { goNext(); return; }       // geannuleerd? dan blijf je op dit scherm
+      endNextBtn.hidden = !nxt;
+      if (recs) recs.hidden = false;
+      endCard.hidden = false; stage.classList.add("is-ui");
     });
     v.addEventListener("error", () => {
       stage.classList.remove("is-loading");
@@ -380,7 +414,7 @@ export default {
     /* Klikken/tikken op het beeld */
     let lastTap = 0, tapTimer = null;
     scope.on(stage, "pointerup", (e) => {
-      if (e.target.closest(".pl-bottom, .pl-top, .pl-float, .pl-end, .pl-error, .pl-center")) return;
+      if (e.target.closest(".pl-bottom, .pl-top, .pl-float, .pl-end, .pl-error, .pl-center, .pl-recs")) return;
       if (e.pointerType === "mouse") {
         if (e.button !== 0) return;
         clearTimeout(tapTimer);
@@ -398,7 +432,7 @@ export default {
         if (stage.classList.contains("is-ui") && !v.paused) stage.classList.remove("is-ui"); else showUi();
       }, 240);
     });
-    scope.on(stage, "dblclick", (e) => { if (e.pointerType === "touch" || e.target.closest(".pl-bottom, .pl-top, .pl-float")) return; clearTimeout(tapTimer); toggleFullscreen(); });
+    scope.on(stage, "dblclick", (e) => { if (e.pointerType === "touch" || e.target.closest(".pl-bottom, .pl-top, .pl-float, .pl-recs")) return; clearTimeout(tapTimer); toggleFullscreen(); });
     scope.on(stage, "mousemove", showUi);
     scope.on(stage, "keydown", showUi);
 

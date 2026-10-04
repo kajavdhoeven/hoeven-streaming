@@ -3,7 +3,7 @@
 import { h, Scope, sleep } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
 import { aurora } from "../ui/aurora.js";
-import { avatar, AVATAR_COLORS, AVATAR_EMOJIS } from "../ui/avatar.js";
+import { avatar, avatarImagePath, iconValue, AVATAR_COLORS, AVATAR_EMOJIS } from "../ui/avatar.js";
 import { openModal, confirmDialog } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
 import { profileTransition } from "../ui/transition.js";
@@ -77,13 +77,18 @@ export default {
     function editor(existing) {
       const draft = existing ? { ...existing } : { name: "", avatar_color: AVATAR_COLORS[session.profiles.length % AVATAR_COLORS.length], avatar_emoji: AVATAR_EMOJIS[session.profiles.length % AVATAR_EMOJIS.length], is_kids: false };
       const preview = h("div", { class: "pe-preview" });
-      const paint = () => preview.replaceChildren(h("div", { class: `avatar ${draft.avatar_color}`, style: { "--size": "116px" } }, h("span", { key: draft.avatar_emoji }, draft.avatar_emoji)));
+      const paint = () => preview.replaceChildren(avatar(draft, { size: 116 }));
+      let lastEmoji = avatarImagePath(draft) ? AVATAR_EMOJIS[0] : draft.avatar_emoji;
+      const icons = (session.settings?.avatar_icons || []).filter((i) => i?.path);
       const name = h("input", { class: "input", maxLength: 20, placeholder: "Naam", value: draft.name, autofocus: true, "aria-label": "Naam", onInput: (e) => { draft.name = e.target.value; } });
-      const swatches = h("div", { class: "pe-swatches" }, AVATAR_COLORS.map((c) => h("button", { type: "button", class: `pe-swatch avatar ${c}`, "aria-label": `Kleur ${c}`, style: { "--size": "38px" }, onClick: () => { draft.avatar_color = c; paintPickers(); paint(); } })));
-      const emojis = h("div", { class: "pe-emojis" }, AVATAR_EMOJIS.map((e) => h("button", { type: "button", class: "pe-emoji", "aria-label": `Symbool ${e}`, onClick: () => { draft.avatar_emoji = e; paintPickers(); paint(); } }, e)));
+      const swatches = h("div", { class: "pe-swatches" }, AVATAR_COLORS.map((c) => h("button", { type: "button", class: `pe-swatch avatar ${c}`, "aria-label": `Kleur ${c}`, style: { "--size": "38px" }, onClick: () => { draft.avatar_color = c; if (avatarImagePath(draft)) draft.avatar_emoji = lastEmoji; paintPickers(); paint(); } })));
+      const iconBtns = h("div", { class: "pe-icons" }, icons.map((i) => h("button", { type: "button", class: "pe-icon", "aria-label": i.name || "Pictogram", title: i.name || "", onClick: () => { draft.avatar_emoji = iconValue(i.path); paintPickers(); paint(); } },
+        h("img", { src: api.media.artwork(i.path), alt: "", loading: "lazy", decoding: "async", draggable: false }))));
+      const emojis = h("div", { class: "pe-emojis" }, AVATAR_EMOJIS.map((e) => h("button", { type: "button", class: "pe-emoji", "aria-label": `Symbool ${e}`, onClick: () => { draft.avatar_emoji = e; lastEmoji = e; paintPickers(); paint(); } }, e)));
       const paintPickers = () => {
         [...swatches.children].forEach((b, i) => b.classList.toggle("is-active", AVATAR_COLORS[i] === draft.avatar_color));
         [...emojis.children].forEach((b, i) => b.classList.toggle("is-active", AVATAR_EMOJIS[i] === draft.avatar_emoji));
+        [...iconBtns.children].forEach((b, i) => b.classList.toggle("is-active", iconValue(icons[i].path) === draft.avatar_emoji));
       };
       const kids = h("input", { type: "checkbox", checked: draft.is_kids, onChange: (e) => { draft.is_kids = e.target.checked; } });
 
@@ -113,6 +118,7 @@ export default {
         body: [
           preview,
           h("div", { class: "field" }, h("label", null, "Naam"), name),
+          icons.length ? h("div", { class: "field" }, h("label", null, "Pictogrammen van Hoeven+"), iconBtns) : null,
           h("div", { class: "field" }, h("label", null, "Kleur"), swatches),
           h("div", { class: "field" }, h("label", null, "Symbool"), emojis),
           h("label", { class: "pe-switch-row switch" },

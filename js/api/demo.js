@@ -78,7 +78,7 @@ function seedData() {
     T.push({
       id, kind, title: name, tagline: opts.tagline || "", description: opts.description, year: opts.year || 2025,
       genres: opts.genres || [], rating: opts.rating || "AL", poster_path: poster(name, pal, n), backdrop_path: backdrop(pal, n),
-      status: opts.status || "published", release_at: opts.release_at || null, featured: !!opts.featured, show_on_landing: opts.status !== "draft" && opts.status !== "coming_soon" && !opts.private,
+      status: opts.status || "published", release_at: opts.release_at || null, featured: !!opts.featured, is_new: !!opts.is_new, show_on_landing: opts.status !== "draft" && opts.status !== "coming_soon" && !opts.private,
       created_by: "demo-user", created_at: new Date(now - (20 - n) * DAY).toISOString(), updated_at: new Date(now - (20 - n) * DAY).toISOString(),
     });
     eps.forEach((e, i) => V.push({
@@ -90,7 +90,7 @@ function seedData() {
   }
 
   title("t-oude-dagen", "series", "Oude Dagen", {
-    tagline: "Herinneringen die nooit oud worden", featured: true, genres: ["Familie", "Documentaire"], year: 2024,
+    tagline: "Herinneringen die nooit oud worden", featured: true, is_new: true, genres: ["Familie", "Documentaire"], year: 2024,
     description: "Een liefdevolle reis door tientallen jaren familiebeelden: van de eerste stapjes tot lange zomeravonden in de tuin. Kijk mee naar de momenten die alles samen maken.",
   }, [["De eerste stapjes", "Waar het allemaal begon: de allereerste beelden van thuis.", 1620], ["Het huis aan de dijk", "Een rondleiding door het huis waar zoveel gebeurde.", 1710], ["Zomer in de tuin", "Lange dagen, koude drankjes en veel gelach.", 1580]]);
 
@@ -273,7 +273,7 @@ export function create() {
       async showcase() {
         await delay(150);
         return clone(db.titles.filter((t) => t.status === "published" && t.show_on_landing && t.poster_path)
-          .sort((a, b) => (b.featured - a.featured) || (new Date(b.created_at) - new Date(a.created_at))).slice(0, 12)
+          .sort((a, b) => (b.featured - a.featured) || (new Date(b.created_at) - new Date(a.created_at))).slice(0, 40)
           .map(({ id, title, kind, year, genres, poster_path }) => ({ id, title, kind, year, genres, poster_path })));
       },
     },

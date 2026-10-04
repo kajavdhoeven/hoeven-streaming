@@ -9,6 +9,7 @@ import { session, reloadSettings } from "../../core/session.js";
 import { api } from "../../api/index.js";
 import { CONFIG } from "../../config.js";
 import { ratingBadge } from "./layout.js";
+import { avatarInner } from "../../ui/avatar.js";
 
 const RATING_TEXT = {
   AL: "Geschikt voor alle leeftijden.",
@@ -76,8 +77,75 @@ export default {
       h("div", { class: "field" }, h("span", { class: "label" }, "Zo zien kijkers het"), stage),
       h("div", { class: "st-set-foot" }, saveBtn));
 
+    /* --- Profielpictogrammen --------------------------------------------------------------------- */
+    const MAX_ICONS = 60;
+    let icons = [...(session.settings?.avatar_icons || [])].filter((i) => i?.path);
+    try { icons = [...((await api.settings.get()).avatar_icons || icons)].filter((i) => i?.path); } catch { /* sessiewaarde */ }
+    let busy = 0;
+    const fileIn = h("input", { type: "file", accept: "image/*", multiple: true, hidden: true, tabIndex: -1 });
+    const grid = h("div", { class: "st-avs" });
+    const avCount = h("span", { class: "hint" });
+
+    // Vierkant uitsnijden en verkleinen: kleine bestanden, en overal dezelfde vorm
+    async function squareIcon(file) {
+      const bmp = await createImageBitmap(file);
+      const side = Math.min(bmp.width, bmp.height);
+      const size = Math.min(512, side);
+      const c = document.createElement("canvas"); c.width = c.height = size;
+      c.getContext("2d").drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
+      bmp.close?.();
+      const blob = await new Promise((res) => c.toBlob(res, "image/webp", 0.9)) || await new Promise((res) => c.toBlob(res, "image/png"));
+      const ext = blob.type === "image/webp" ? "webp" : "png";
+      return new File([blob], `${(file.name || "pictogram").replace(/\.[^.]+$/, "") || "pictogram"}.${ext}`, { type: blob.type });
+    }
+    async function persist() { await api.settings.set("avatar_icons", icons); await reloadSettings(); }
+
+    function paintIcons() {
+      avCount.textContent = `${icons.length} van ${MAX_ICONS}`;
+      const tiles = icons.map((i) => h("div", { class: "st-av" },
+        h("div", { class: "avatar is-img c1" }, avatarInner({ avatar_emoji: `img:${i.path}` })),
+        h("button", { class: "st-av-x", type: "button", "aria-label": `Pictogram ${i.name || ""} verwijderen`, title: "Verwijderen", onClick: () => removeIcon(i) }, icon("trash"))));
+      const add = h("button", { class: `st-av-add${busy ? " is-busy" : ""}`, type: "button", disabled: !!busy || icons.length >= MAX_ICONS, onClick: () => fileIn.click() },
+        busy ? h("span", { class: "pl-ring-spin" }) : icon("plus"), h("span", null, busy ? "Uploaden..." : "Toevoegen"));
+      grid.replaceChildren(...tiles, add);
+    }
+    async function addFiles(files) {
+      const list = [...files].filter((f) => f.type.startsWith("image/"));
+      if (!list.length) { toast("Kies afbeeldingen (JPG, PNG of WebP).", "error"); return; }
+      let added = 0;
+      busy++; paintIcons();
+      for (const f of list) {
+        if (icons.length >= MAX_ICONS) { toast(`Het maximum van ${MAX_ICONS} pictogrammen is bereikt.`, "info"); break; }
+        if (f.size > 10 * 1024 * 1024) { toast(`${f.name} is te groot (max 10 MB).`, "error"); continue; }
+        try {
+          const small = await squareIcon(f);
+          const { path } = await api.studio.upload("artwork", small, { folder: "avatars" });
+          icons = [...icons, { id: (crypto.randomUUID?.() || String(Date.now() + added)), name: f.name.replace(/\.[^.]+$/, ""), path }];
+          await persist();
+          added++;
+        } catch (e) { toast(e.message || "Uploaden mislukt.", "error"); }
+      }
+      busy--; paintIcons();
+      if (added) toast(added === 1 ? "Pictogram toegevoegd." : `${added} pictogrammen toegevoegd.`, "ok");
+    }
+    async function removeIcon(i) {
+      if (!await confirmDialog({ title: "Pictogram verwijderen?", message: "Profielen die dit pictogram gebruiken krijgen weer een standaard symbool.", confirmText: "Verwijderen", danger: true })) return;
+      try {
+        icons = icons.filter((x) => x.path !== i.path);
+        await persist();
+        api.studio.removeFiles("artwork", [i.path]).catch(() => {});
+        paintIcons();
+        toast("Pictogram verwijderd.", "ok");
+      } catch (e) { toast(e.message, "error"); }
+    }
+    scope.on(fileIn, "change", () => { addFiles(fileIn.files); fileIn.value = ""; });
+    const avatarsCard = h("section", { class: "st-card st-set-card st-wide stagger", style: { "--i": 1 } },
+      h("div", { class: "st-set-head" }, h("span", { class: "st-set-ico" }, icon("image")), h("div", null, h("h3", null, "Profielpictogrammen"), h("p", { class: "muted" }, "Upload plaatjes waaruit kijkers kunnen kiezen bij het maken van hun profiel. Ze worden vierkant bijgesneden en verkleind."))),
+      grid, fileIn, avCount);
+    paintIcons();
+
     /* --- Opslag ---------------------------------------------------------------------------------- */
-    const storage = h("section", { class: "st-card st-set-card stagger", style: { "--i": 1 } },
+    const storage = h("section", { class: "st-card st-set-card stagger", style: { "--i": 2 } },
       h("div", { class: "st-set-head" }, h("span", { class: "st-set-ico" }, icon("upload")), h("div", null, h("h3", null, "Opslag en grote video's"), h("p", { class: "muted" }, "Waar je bestanden terechtkomen."))),
       h("ul", { class: "st-facts" },
         h("li", null, icon("image"), h("span", null, h("b", null, "Afbeeldingen"), " (posters, achtergronden en thumbnails) zijn maximaal 10 MB per stuk.")),
@@ -108,7 +176,7 @@ export default {
           h("span", { class: `badge ${kids ? "ok" : "draft"}` }, kids ? "Ook voor kinderprofielen" : "Alleen gewone profielen"));
       })));
 
-    page.append(announce, storage, backend, ratings);
+    page.append(announce, avatarsCard, storage, backend, ratings);
     sync();
     return () => scope.dispose();
   },

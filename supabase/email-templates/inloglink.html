@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="nl" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>Hoeven+</title>
+</head>
+<body style="margin:0;padding:0;background-color:#07080d;">
+<!-- Voorbeeldtekst die in de inbox naast het onderwerp staat -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#07080d;">Met deze link log je direct in bij Hoeven+.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07080d" style="background-color:#07080d;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+      <tr><td align="center" style="padding:8px 0 24px;">
+        <a href="{{ .SiteURL }}" style="text-decoration:none;"><img src="{{ .SiteURL }}/assets/img/logo.png" width="150" alt="Hoeven+" style="display:block;border:0;height:auto;font:700 28px Arial,Helvetica,sans-serif;color:#ffffff;"></a>
+      </td></tr>
+      <tr><td bgcolor="#11131d" style="background-color:#11131d;border:1px solid #232637;border-radius:20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td height="5" style="height:5px;line-height:5px;font-size:0;border-radius:20px 20px 0 0;background-color:#8b4ea2;background-image:linear-gradient(90deg,#2fbdf5,#8b4ea2,#f0492a);">&nbsp;</td></tr>
+          <tr><td style="padding:36px 36px 40px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#e9eaf2;">
+            <p style="margin:0 0 6px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#8d91a8;font-weight:700;">Inloggen</p>
+            <h1 style="margin:0 0 16px;font-size:28px;line-height:1.2;color:#ffffff;font-weight:800;">Je inloglink</h1>
+            <p style="margin:0 0 14px;font-size:16px;line-height:1.65;color:#c9ccdd;">Klik op de knop hieronder om in te loggen met <strong style="color:#ffffff;">{{ .Email }}</strong>. Je hoeft geen wachtwoord in te typen.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:30px 0 8px;">
+              <tr><td align="center" bgcolor="#3f58c6" style="border-radius:999px;background-color:#3f58c6;background-image:linear-gradient(90deg,#2fbdf5,#8b4ea2);">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 34px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;">Inloggen bij Hoeven+</a>
+              </td></tr>
+            </table>
+            <p style="margin:26px 0 6px;font-size:13px;line-height:1.6;color:#8d91a8;">Werkt de knop niet? Kopieer deze link en plak hem in je browser:</p>
+            <p style="margin:0;font-size:13px;line-height:1.5;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#59c8f7;text-decoration:underline;">{{ .ConfirmationURL }}</a></p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;"><tr><td height="1" bgcolor="#232637" style="height:1px;line-height:1px;font-size:0;background-color:#232637;">&nbsp;</td></tr></table>
+            <p style="margin:22px 0 0;font-size:14px;line-height:1.6;color:#a7abc0;">Heb je niet om deze link gevraagd? Dan kun je deze mail negeren. Deel de link met niemand: wie hem heeft, kan inloggen als jij.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td align="center" style="padding:26px 12px 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.7;color:#6f7390;">
+        Hoeven+ &middot; onze eigen streamingdienst voor familie en vrienden<br>
+        Gratis, zonder reclame en alleen op uitnodiging.<br>
+        <a href="{{ .SiteURL }}" style="color:#8d91a8;text-decoration:underline;">{{ .SiteURL }}</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

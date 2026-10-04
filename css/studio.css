@@ -636,3 +636,16 @@
   .st-title { font-size: 20px; }
   .st-demo { padding: 4px 9px; font-size: 11px; }
 }
+
+/* Profielpictogrammen beheren */
+.st-avs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px; }
+.st-av { position: relative; }
+.st-av .avatar { --size: 100%; width: 100%; aspect-ratio: 1; height: auto; }
+.st-av-x { position: absolute; top: -6px; right: -6px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #1b1e2c; border: 1px solid var(--line-2); color: #fff; font-size: 14px; opacity: 0; transform: scale(0.8); transition: opacity 0.2s, transform 0.2s var(--spring), background 0.2s; }
+.st-av:hover .st-av-x, .st-av-x:focus-visible { opacity: 1; transform: none; }
+.st-av-x:hover { background: var(--c-red, #e5484d); }
+@media (hover: none) { .st-av-x { opacity: 1; transform: none; } }
+.st-av-add { aspect-ratio: 1; border-radius: 22%; display: grid; place-content: center; justify-items: center; gap: 4px; border: 2px dashed var(--line-2); color: var(--text-2); font-size: 22px; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+.st-av-add span { font-size: 12px; font-weight: 600; }
+.st-av-add:hover:not(:disabled) { border-color: #fff; color: #fff; background: rgba(255, 255, 255, 0.06); }
+.st-av-add:disabled { opacity: 0.6; cursor: default; }

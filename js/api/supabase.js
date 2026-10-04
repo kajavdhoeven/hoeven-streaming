@@ -187,10 +187,12 @@ export function create() {
             return sb.from("titles").insert({ ...f, created_by: u.user?.id }).select().single();
           };
           let res = await run(fields);
-          // Kolom ontbreekt nog (update-landing.sql niet gedraaid)? Opslaan zonder dat veld.
-          if (res.error && /show_on_landing/.test(res.error.message)) {
-            const { show_on_landing, ...rest } = fields;
-            res = await run(rest);
+          // Kolom ontbreekt nog (updates.sql niet gedraaid)? Opslaan zonder dat veld.
+          for (const col of ["show_on_landing", "is_new"]) {
+            if (res.error && res.error.message.includes(col) && col in fields) {
+              delete fields[col];
+              res = await run(fields);
+            }
           }
           return unwrap(res);
         },

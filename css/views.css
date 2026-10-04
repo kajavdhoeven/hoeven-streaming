@@ -107,7 +107,12 @@
 /* Profiel maken/bewerken */
 .pe-preview { display: grid; place-items: center; padding: 6px 0 2px; }
 .pe-preview .avatar { --size: 116px; transition: background 0.3s; }
-.pe-preview .avatar span { display: block; animation: popIn 0.4s var(--spring) both; }
+.pe-preview .avatar > span, .pe-preview .avatar > img { display: block; animation: popIn 0.4s var(--spring) both; }
+.pe-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 10px; }
+.pe-icon { aspect-ratio: 1; border-radius: 20%; overflow: hidden; background: #151826; transition: transform 0.25s var(--spring), box-shadow 0.2s; }
+.pe-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pe-icon:hover { transform: scale(1.08); }
+.pe-icon.is-active { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px #fff; transform: scale(1.04); }
 .pe-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
 .pe-swatch { width: 38px; height: 38px; border-radius: 12px; transition: transform 0.25s var(--spring), box-shadow 0.2s; }
 .pe-swatch:hover { transform: scale(1.12); }

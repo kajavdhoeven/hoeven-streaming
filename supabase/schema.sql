@@ -120,6 +120,7 @@ create table if not exists public.titles (
   release_at    timestamptz,           -- bij 'coming_soon': vanaf dan automatisch kijkbaar
   featured      boolean not null default false,
   show_on_landing boolean not null default false, -- mag op de openbare voorpagina (zonder inloggen)
+  is_new boolean not null default false,          -- handmatig "Nieuw"-label
   created_by    uuid references public.members (id) on delete set null,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
@@ -248,6 +249,9 @@ $$;
 alter table public.videos drop constraint if exists videos_source_check;
 alter table public.videos add constraint videos_source_check check (source in ('storage', 'url', 'youtube'));
 
+-- Handmatig "Nieuw"-label (jij bepaalt welke titels het krijgen)
+alter table public.titles add column if not exists is_new boolean not null default false;
+
 -- Bestaande installaties: kolom voor de openbare voorpagina toevoegen
 alter table public.titles add column if not exists show_on_landing boolean not null default false;
 
@@ -265,7 +269,7 @@ language sql stable security definer set search_path = public as $$
               where w.title_id = t.id and w.day >= current_date - 14), 0) desc,
     t.featured desc,
     t.created_at desc
-  limit 12;
+  limit 40;
 $$;
 
 -- ----------------------------------------------------------------------------
