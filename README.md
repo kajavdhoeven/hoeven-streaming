@@ -155,6 +155,20 @@ Open het bestand, kopieer alles, plak het in het vak van de template en vul het 
 
 Test het door op de inlogpagina op **Wachtwoord vergeten** te klikken.
 
+## Deelafbeelding (WhatsApp en andere apps)
+
+Deel je de link van Hoeven+ in WhatsApp, iMessage, Telegram of Discord, dan verschijnt een voorbeeld met afbeelding, titel en beschrijving. De afbeelding is [`assets/img/og-image.jpg`](assets/img/og-image.jpg).
+
+**Eigen afbeelding gebruiken:**
+
+1. Maak of kies een afbeelding van **1200 x 630 pixels** als JPG, liefst kleiner dan 300 KB (WhatsApp laat grotere afbeeldingen weg).
+2. Open op GitHub de map `assets/img`, klik op **Add file > Upload files** en upload je afbeelding **met precies de naam `og-image.jpg`**. Dat overschrijft de standaardafbeelding.
+3. Wacht tot Cloudflare klaar is met deployen.
+
+**Voorbeeld verversen:** WhatsApp onthoudt een voorbeeld lang. Wijzig je de afbeelding en zie je nog de oude, verander dan `?v=1` in `?v=2` achter `og-image.jpg` in `index.html` (op twee plekken), of deel de link met `?x=2` erachter. Op Facebook kun je de cache wissen met de Sharing Debugger.
+
+Het bestand `functions/index.js` zorgt dat het volledige webadres van de afbeelding automatisch klopt, ook als je later van domein wisselt. Je hoeft daar niets aan te doen.
+
 ## Veiligheid, eerlijk uitgelegd
 
 - Alleen goedgekeurde leden kunnen titels, video's en voortgang lezen. Dit wordt afgedwongen in de database (Row Level Security), niet alleen in de website.

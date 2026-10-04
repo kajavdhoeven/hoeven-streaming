@@ -279,21 +279,34 @@ export class YouTubeMedia extends EventTarget {
   play() {
     this._player?.playVideo();
     clearTimeout(this._g1); clearTimeout(this._g2);
+    const touch = isTouch();
     this._g1 = setTimeout(() => {
       // Nog niet gestart (ook "laden" telt mee: bij geblokkeerd afspelen blijft YouTube soms eindeloos op laden staan)
       if (!this._paused || this._triedMuted) return;
-      this._log("niet gestart na 1,5 s: gedempt proberen");
+      this._log("niet gestart: gedempt proberen");
       this._triedMuted = true;
       this._forcedMute = true;
       try { this._player.mute(); this._player.playVideo(); } catch { /* */ }
-    }, 1500);
+    }, touch ? 1200 : 1500);
+    // Telefoon: staat YouTube na korte tijd nog op "niet gestart" of "klaar", dan blokkeert de browser het starten.
+    // Dan meteen YouTube's eigen afspeelknop tikbaar maken in plaats van lang te wachten.
     this._g2 = setTimeout(() => {
       if (!this._paused) return;
-      this._log("niet gestart na 6 s: YouTube's eigen knop tonen");
-      this._emit("canplay");
-      this._emit("autoplayblocked"); // de kijker moet zelf op YouTube's afspeelknop tikken
-    }, isTouch() ? 4000 : 6000);
+      const idle = this._state === STATE.UNSTARTED || this._state === STATE.CUED;
+      if (touch && !idle && !this._extended) { this._extended = true; this._g2 = setTimeout(() => this._blocked(), 4000); return; } // laadt nog echt: iets langer wachten
+      this._blocked();
+    }, touch ? 2600 : 6000);
     return Promise.resolve();
+  }
+
+  /** Starten lukt niet vanzelf: de kijker tikt zelf op YouTube's knop. Geluid vast aanzetten, zodat die tik ook geluid geeft. */
+  _blocked() {
+    if (!this._paused) return;
+    this._log("niet gestart: YouTube's eigen knop tonen");
+    this._forcedMute = false;
+    if (!this._muted) { try { this._player.unMute(); } catch { /* */ } }
+    this._emit("canplay");
+    this._emit("autoplayblocked");
   }
 
   /** Na gedempt starten: geluid weer aanzetten als de browser dat toestaat, anders de kijker laten tikken. */
@@ -315,7 +328,7 @@ export class YouTubeMedia extends EventTarget {
     clearInterval(this._poll);
     clearTimeout(this._seekTimer);
     clearTimeout(this._g1); clearTimeout(this._g2);
-    this._triedMuted = false; this._forcedMute = isTouch(); this._state = -1;
+    this._triedMuted = false; this._extended = false; this._forcedMute = isTouch(); this._state = -1;
     try { this._player?.destroy(); } catch { /* */ }
     this._player = null;
     this._paused = true; this._ended = false; this._seeking = false; this._error = null; this._duration = 0;

@@ -18,7 +18,8 @@ import { back, navigate } from "../core/router.js";
 import { VERSION } from "../version.js";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-const HIDE_MS = 3000;
+const HIDE_MS = 3000;        // muis: balk na 3 s weg
+const HIDE_TOUCH_MS = 5000;  // aanraking: iets langer, zodat je rustig kunt kijken
 const SAVE_MS = 10000;
 const NEXT_COUNTDOWN = 10;   // volgende aflevering: pas in de laatste 10 seconden
 const RECS_SECONDS = 15;     // aanbevelingen: laatste 15 seconden van een film (of laatste aflevering)
@@ -185,6 +186,7 @@ export default {
 
     /* --------------------------------- gedrag --------------------------------- */
     let hideTimer = null;
+    let lastTouchAt = 0;        // tijdstip van de laatste aanraking (telefoons sturen daarna ook nagebootste muisberichten)
     let nextDismissed = false;
     let recsDismissed = false;
     let duration = 0;
@@ -211,7 +213,8 @@ export default {
     function showUi() {
       stage.classList.add("is-ui");
       clearTimeout(hideTimer);
-      if (!v.paused && !dragging && speedMenu.hidden) hideTimer = setTimeout(() => stage.classList.remove("is-ui"), HIDE_MS);
+      const ms = Date.now() - lastTouchAt < 8000 ? HIDE_TOUCH_MS : HIDE_MS;
+      if (!v.paused && !dragging && speedMenu.hidden) hideTimer = setTimeout(() => stage.classList.remove("is-ui"), ms);
     }
     const flashIcon = (name) => {
       flash.replaceChildren(icon(name, { fill: true }));
@@ -418,7 +421,9 @@ export default {
 
     /* Klikken/tikken op het beeld */
     let lastTap = 0, tapTimer = null;
+    scope.on(stage, "pointerdown", (e) => { if (e.pointerType === "touch") { lastTouchAt = Date.now(); if (stage.classList.contains("is-ui")) showUi(); } });
     scope.on(stage, "pointerup", (e) => {
+      if (e.pointerType === "touch") lastTouchAt = Date.now();
       if (e.target.closest(".pl-bottom, .pl-top, .pl-float, .pl-end, .pl-error, .pl-center, .pl-recs")) return;
       if (e.pointerType === "mouse") {
         if (e.button !== 0) return;
@@ -428,17 +433,19 @@ export default {
       }
       // aanraking: dubbeltik links/rechts = spoelen, enkele tik = bediening tonen/verbergen
       const now = Date.now();
+      lastTouchAt = now;
+      const uiWas = stage.classList.contains("is-ui");   // nu bepalen: daarna sturen telefoons nog nagebootste muisberichten
       const r = stage.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width;
       if (now - lastTap < 320 && (x < 0.35 || x > 0.65)) { clearTimeout(tapTimer); skip(x < 0.5 ? -10 : 10); lastTap = 0; return; }
       lastTap = now;
       clearTimeout(tapTimer);
       tapTimer = setTimeout(() => {
-        if (stage.classList.contains("is-ui") && !v.paused) stage.classList.remove("is-ui"); else showUi();
+        if (uiWas && !v.paused) { clearTimeout(hideTimer); stage.classList.remove("is-ui"); } else showUi();
       }, 240);
     });
     scope.on(stage, "dblclick", (e) => { if (e.pointerType === "touch" || e.target.closest(".pl-bottom, .pl-top, .pl-float, .pl-recs")) return; clearTimeout(tapTimer); toggleFullscreen(); });
-    scope.on(stage, "mousemove", showUi);
+    scope.on(stage, "mousemove", () => { if (Date.now() - lastTouchAt > 800) showUi(); });
     scope.on(stage, "keydown", showUi);
 
     /* Sneltoetsen */

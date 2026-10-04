@@ -61,6 +61,8 @@
   --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
 
   /* Profielkleuren */
   --av-c1: linear-gradient(135deg, #2fbdf5, #3f58c6);

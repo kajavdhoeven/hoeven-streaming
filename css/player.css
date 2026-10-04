@@ -4,7 +4,7 @@
 
 .pl { position: fixed; inset: 0; background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: manipulation; animation: fadeIn 0.5s ease both; }
 .pl:not(.is-ui):not(.is-paused) { cursor: none; }
-.pl-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.pl-video { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); width: calc(100% - var(--safe-l) - var(--safe-r)); height: 100%; object-fit: contain; background: #000; }
 
 /* Laden */
 .pl-spinner { position: absolute; inset: 0; z-index: 2; display: none; place-items: center; pointer-events: none; background: radial-gradient(circle, rgba(0, 0, 0, 0.45), transparent 60%); }
@@ -14,7 +14,7 @@
 .pl-ui { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.4s; }
 .pl.is-ui .pl-ui { opacity: 1; }
 .pl.is-ui .pl-top, .pl.is-ui .pl-bottom { pointer-events: auto; }
-.pl-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px; padding: calc(16px + var(--safe-t)) clamp(14px, 3vw, 36px) 64px; background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent); transform: translateY(-14px); transition: transform 0.45s var(--ease); }
+.pl-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px; padding: calc(16px + var(--safe-t)) max(clamp(14px, 3vw, 36px), var(--safe-r)) 64px max(clamp(14px, 3vw, 36px), var(--safe-l)); background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent); transform: translateY(-14px); transition: transform 0.45s var(--ease); }
 .pl.is-ui .pl-top { transform: none; }
 .pl-back { width: 48px; height: 48px; font-size: 26px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px); flex: none; }
 .pl-title { display: grid; min-width: 0; }
@@ -26,7 +26,7 @@
 .pl.is-paused.is-ui:not(.is-loading) .pl-center { opacity: 1; transform: none; pointer-events: auto; }
 .pl-center:hover { background: rgba(255, 255, 255, 0.2); }
 
-.pl-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 80px clamp(14px, 3vw, 36px) calc(14px + var(--safe-b)); background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), transparent); transform: translateY(14px); transition: transform 0.45s var(--ease); }
+.pl-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 80px max(clamp(14px, 3vw, 36px), var(--safe-r)) calc(14px + var(--safe-b)) max(clamp(14px, 3vw, 36px), var(--safe-l)); background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), transparent); transform: translateY(14px); transition: transform 0.45s var(--ease); }
 .pl.is-ui .pl-bottom { transform: none; }
 
 .pl-seek { position: relative; height: 24px; display: flex; align-items: center; cursor: pointer; touch-action: none; border-radius: 6px; }
@@ -72,7 +72,7 @@
 @keyframes plHint { 0% { opacity: 0; transform: translate(-50%, 8px); } 12%, 75% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
 
 /* Zwevende knoppen: intro overslaan, volgende aflevering */
-.pl-float { position: absolute; z-index: 6; right: clamp(14px, 3vw, 36px); bottom: calc(128px + var(--safe-b)); animation: slideLeft 0.5s var(--ease) both; }
+.pl-float { position: absolute; z-index: 6; right: max(clamp(14px, 3vw, 36px), var(--safe-r)); bottom: calc(128px + var(--safe-b)); animation: slideLeft 0.5s var(--ease) both; }
 .pl-intro { min-height: 48px; padding: 0 22px; background: rgba(20, 22, 32, 0.75); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5); }
 .pl-intro:hover { background: #fff; color: #0a0b10; }
 .pl-next { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; max-width: min(520px, calc(100vw - 28px)); padding: 12px 14px; border-radius: var(--r-lg); background: rgba(18, 21, 33, 0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--line-2); box-shadow: var(--shadow-2); }
@@ -87,7 +87,7 @@
 .pl-next-text strong { font-family: var(--font-display); font-size: 15px; }
 
 /* Aanbevelingen aan het eind van een film */
-.pl-recs { position: absolute; z-index: 8; left: clamp(14px, 3vw, 36px); right: clamp(14px, 3vw, 36px); bottom: calc(24px + var(--safe-b)); display: grid; gap: 10px; padding: 14px 16px 16px; border-radius: var(--r-lg); background: rgba(10, 11, 18, 0.94); border: 1px solid var(--line-2); box-shadow: var(--shadow-2); animation: recsUp 0.55s var(--ease) both; transition: bottom 0.3s var(--ease); }
+.pl-recs { position: absolute; z-index: 8; left: max(clamp(14px, 3vw, 36px), var(--safe-l)); right: max(clamp(14px, 3vw, 36px), var(--safe-r)); bottom: calc(24px + var(--safe-b)); display: grid; gap: 10px; padding: 14px 16px 16px; border-radius: var(--r-lg); background: rgba(10, 11, 18, 0.94); border: 1px solid var(--line-2); box-shadow: var(--shadow-2); animation: recsUp 0.55s var(--ease) both; transition: bottom 0.3s var(--ease); }
 .pl.is-ui .pl-recs { bottom: calc(112px + var(--safe-b)); }
 .pl-end:not([hidden]) ~ .pl-recs, .pl.is-ui .pl-end:not([hidden]) ~ .pl-recs { bottom: calc(24px + var(--safe-b)); }
 @keyframes recsUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
@@ -134,7 +134,7 @@
 }
 
 /* YouTube: de iframe vult het scherm; alle klikken gaan naar onze eigen bediening */
-.pl-yt { position: absolute; inset: 0; background: #000; }
+.pl-yt { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); background: #000; }
 .pl-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
 
 /* YouTube startte niet vanzelf: YouTube's eigen afspeelknop moet aangeraakt kunnen worden */
@@ -154,7 +154,7 @@
 .pl-ring-spin { display: block; width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.16); border-top-color: #fff; animation: spin 0.85s linear infinite; }
 
 /* Gordijn over de YouTube-speler: verbergt YouTube's eigen afspeelknop en logo tot de video speelt */
-.pl-curtain { position: absolute; inset: 0; z-index: 1; background: #05060a; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0s 0.5s; pointer-events: none; }
+.pl-curtain { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); z-index: 1; background: #05060a; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0s 0.5s; pointer-events: none; }
 .pl-curtain img { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(22px) brightness(0.42) saturate(1.1); }
 .pl.is-curtain .pl-curtain { opacity: 1; visibility: visible; transition: none; }
 .pl.is-curtain .pl-spinner { z-index: 2; }
