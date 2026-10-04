@@ -150,7 +150,7 @@ Open het bestand, kopieer alles, plak het in het vak van de template en vul het 
 
 **Twee instellingen die het echt goed maken:**
 
-1. **Site URL**: zet onder Authentication > URL Configuration de **Site URL** op het echte adres van je site (bijvoorbeeld `https://hoeven.jouwdomein.nl`) en zet dat adres ook bij **Redirect URLs**. Het logo in de mail en de link naar de site komen hieruit. Staat hier nog `localhost`, dan kapot je logo en link.
+1. **Site URL**: zet onder Authentication > URL Configuration de **Site URL** op het echte adres van je site (bijvoorbeeld `https://hoeven.jouwdomein.nl`) en zet dat adres ook bij **Redirect URLs**. De link naar de site in de mail komt hieruit. Staat hier nog `localhost`, dan kapot je logo en link.
 2. **Eigen afzender (SMTP)**: de standaardmails van Supabase komen van "Supabase Auth" en er mogen maar een paar per uur uit. Zet onder Authentication > SMTP Settings je eigen afzender aan, bijvoorbeeld via Resend (heb je al voor de registratiemelding): host `smtp.resend.com`, poort `465`, gebruikersnaam `resend` en als wachtwoord je Resend API-key. Typ die key alleen in Supabase, nergens anders. Als afzender (Sender email) moet je een adres van een domein gebruiken dat je in Resend hebt geverifieerd, bijvoorbeeld `noreply@jouwdomein.nl`, en als naam `Hoeven+`.
 
 Test het door op de inlogpagina op **Wachtwoord vergeten** te klikken.
