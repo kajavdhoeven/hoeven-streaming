@@ -49,6 +49,9 @@ export const youTubeErrorText = (code) => `${({
   153: "YouTube weigert de video op deze website (configuratiefout). Ververs met Ctrl + F5. Blijft het zo, zet dan 'Inbedden toestaan' aan in YouTube Studio.",
 }[code]) || "De YouTube-video kan niet worden afgespeeld."}${code ? ` (YouTube-fout ${code})` : ""}`;
 
+/** Telefoon of tablet: daar mag video alleen gedempt vanzelf starten. */
+const isTouch = () => { try { return matchMedia("(pointer: coarse)").matches; } catch { return false; } };
+
 let apiPromise = null;
 
 export function loadYouTubeApi() {
@@ -98,7 +101,7 @@ export class YouTubeMedia extends EventTarget {
     this.log = [];
     this._state = -1;
     this._triedMuted = false;
-    this._forcedMute = false;
+    this._forcedMute = isTouch();   // telefoon: gedempt starten, daarna het geluid proberen aan te zetten
     this._lastEmit = this.start;
   }
 
@@ -120,6 +123,8 @@ export class YouTubeMedia extends EventTarget {
           disablekb: 1,         // sneltoetsen doet onze speler
           fs: 0,
           playsinline: 1,
+          autoplay: 1,          // YouTube zelf laten starten: dit werkt op telefoons, playVideo() vanuit de pagina vaak niet
+          mute: this._forcedMute ? 1 : 0,
           cc_load_policy: 0,
           enablejsapi: 1,
           origin: location.origin,
@@ -131,7 +136,7 @@ export class YouTubeMedia extends EventTarget {
             this._log("speler klaar");
             const p = this._player;
             p.setVolume(Math.round(this._volume * 100));
-            this._muted ? p.mute() : p.unMute();
+            (this._muted || this._forcedMute) ? p.mute() : p.unMute();
             try { p.setPlaybackRate(this._rate); } catch { /* */ }
             this._applyCaptions();
             this._poll = setInterval(() => this._tick(), 250);
@@ -158,7 +163,7 @@ export class YouTubeMedia extends EventTarget {
   _log(msg) {
     if (/^event (timeupdate|progress|durationchange|volumechange|ratechange)$/.test(msg)) return;
     this.log.push(`${((performance.now() - this._t0) / 1000).toFixed(1)}s ${msg}`);
-    if (this.log.length > 16) this.log.shift();
+    if (this.log.length > 24) this.log.splice(1, 1);   // de eerste regel (speler klaar) blijft staan
   }
 
   _onState(s) {
@@ -287,7 +292,7 @@ export class YouTubeMedia extends EventTarget {
       this._log("niet gestart na 6 s: YouTube's eigen knop tonen");
       this._emit("canplay");
       this._emit("autoplayblocked"); // de kijker moet zelf op YouTube's afspeelknop tikken
-    }, 6000);
+    }, isTouch() ? 4000 : 6000);
     return Promise.resolve();
   }
 
@@ -310,7 +315,7 @@ export class YouTubeMedia extends EventTarget {
     clearInterval(this._poll);
     clearTimeout(this._seekTimer);
     clearTimeout(this._g1); clearTimeout(this._g2);
-    this._triedMuted = false; this._forcedMute = false; this._state = -1;
+    this._triedMuted = false; this._forcedMute = isTouch(); this._state = -1;
     try { this._player?.destroy(); } catch { /* */ }
     this._player = null;
     this._paused = true; this._ended = false; this._seeking = false; this._error = null; this._duration = 0;

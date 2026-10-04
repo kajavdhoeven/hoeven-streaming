@@ -149,11 +149,14 @@ export default {
         h("button", { class: "btn btn-primary btn-lg", onClick: () => { endCard.hidden = true; if (recs) recs.hidden = true; v.currentTime = 0; v.play(); } }, icon("refresh"), "Opnieuw kijken"),
         h("button", { class: "btn btn-ghost btn-lg", onClick: () => back(`/title/${title.id}`) }, "Terug naar titel")));
 
+    const ytUrl = isYT ? `https://www.youtube.com/watch?v=${encodeURIComponent(video.video_path)}` : null;
+    const ytLink = isYT ? h("a", { class: "btn btn-outline", href: ytUrl, target: "_blank", rel: "noopener" }, icon("link"), "Open in YouTube") : null;
+    const errDetail = h("small", { class: "pl-err-detail faint" });
     const retryBtn = h("button", { class: "btn btn-primary" }, icon("refresh"), "Opnieuw proberen");
     const errorCard = h("div", { class: "pl-error", hidden: true },
-      h("div", { class: "empty-icon" }, "⚠️"), h("h3", null, "Afspelen mislukt"), h("p", { class: "muted", id: "pl-err-text" }, "Deze video kan nu niet worden afgespeeld."),
+      h("div", { class: "empty-icon" }, "⚠️"), h("h3", null, "Afspelen mislukt"), h("p", { class: "muted", id: "pl-err-text" }, "Deze video kan nu niet worden afgespeeld."), errDetail,
       h("div", { class: "pl-end-actions" },
-        retryBtn,
+        retryBtn, ytLink,
         h("button", { class: "btn btn-outline", onClick: () => back(`/title/${title.id}`) }, "Terug")));
 
     const top = h("div", { class: "pl-top" },
@@ -176,7 +179,8 @@ export default {
         fsBtn));
 
     const ui = h("div", { class: "pl-ui" }, top, centerBtn, bottom);
-    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt is-curtain" : ""}` }, isYT ? v.el : v, curtain, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, recs, errorCard);
+    const tapLink = isYT ? h("a", { class: "pl-ytlink btn btn-ghost btn-sm", href: ytUrl, target: "_blank", rel: "noopener" }, icon("link"), "Start niet? Open in YouTube") : null;
+    const stage = h("div", { class: `pl is-paused is-loading is-ui${isYT ? " is-yt is-curtain" : ""}` }, isYT ? v.el : v, curtain, spinner, skipL, skipR, flash, hint, ui, introBtn, nextCard, endCard, recs, tapLink, errorCard);
     root.appendChild(stage);
 
     /* --------------------------------- gedrag --------------------------------- */
@@ -336,7 +340,7 @@ export default {
     });
     if (isYT) {
       // Start YouTube niet vanzelf (iPhone, strikte browsers)? Laat dan YouTube's eigen knop tikbaar zijn.
-      v.addEventListener("autoplayblocked", () => { stage.classList.remove("is-curtain"); stage.classList.add("needs-tap"); say("Tik op de afspeelknop"); });
+      v.addEventListener("autoplayblocked", () => { stage.classList.remove("is-curtain"); stage.classList.add("needs-tap"); say("Tik op de afspeelknop"); showUi(); });
       v.addEventListener("autoplayok", () => { stage.classList.remove("needs-tap"); setTimeout(() => stage.classList.remove("is-curtain"), 150); });
       v.addEventListener("needsound", needSound);
     }
@@ -375,6 +379,7 @@ export default {
     });
     v.addEventListener("error", () => {
       stage.classList.remove("is-loading");
+      if (isYT) errDetail.textContent = v.log.slice(-4).join(" | ");
       errorCard.querySelector("#pl-err-text").textContent = isYT ? youTubeErrorText(v.error?.code)
         : v.error?.code === 4 ? "Dit bestand kan niet worden afgespeeld (formaat of link niet ondersteund)." : "Er ging iets mis bij het laden van de video. Controleer je verbinding.";
       errorCard.hidden = false;
