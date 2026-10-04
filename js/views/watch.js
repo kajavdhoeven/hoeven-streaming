@@ -418,6 +418,15 @@ export default {
     nextBtn && scope.on(nextBtn, "click", goNext);
     scope.on(document, "fullscreenchange", setIcons);
     scope.on(document, "webkitfullscreenchange", setIcons);
+    // Na schermvullend of draaien: beeld opnieuw laten centreren (YouTube doet dat zelf niet altijd)
+    let relayoutTimer = null;
+    const relayout = () => {
+      if (!isYT) return;
+      clearTimeout(relayoutTimer);
+      relayoutTimer = setTimeout(() => { v.relayout(); setTimeout(() => v.relayout(), 600); }, 250);
+    };
+    for (const [t, ev] of [[document, "fullscreenchange"], [document, "webkitfullscreenchange"], [window, "resize"], [window, "orientationchange"]]) scope.on(t, ev, relayout);
+    scope.add(() => clearTimeout(relayoutTimer));
 
     /* Klikken/tikken op het beeld */
     let lastTap = 0, tapTimer = null;
@@ -513,6 +522,15 @@ export default {
     }
     /* Diagnose: ?debug=1, of drie keer snel op de titel tikken */
     let debugBox = null;
+    const probe = h("div", { style: { position: "fixed", visibility: "hidden", pointerEvents: "none", padding: "env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)" } });
+    stage.appendChild(probe);
+    function layoutLine() {
+      const el = isYT ? v.el.querySelector("iframe") : v;
+      const r = el?.getBoundingClientRect?.();
+      const cs = getComputedStyle(probe);
+      const vv = window.visualViewport;
+      return `beeld links ${r ? Math.round(r.left) : "?"} rechts ${r ? Math.round(innerWidth - r.right) : "?"} breed ${r ? Math.round(r.width) : "?"} - uitsparing T${parseInt(cs.paddingTop)} R${parseInt(cs.paddingRight)} B${parseInt(cs.paddingBottom)} L${parseInt(cs.paddingLeft)} - zicht ${vv ? `${Math.round(vv.width)}@${Math.round(vv.offsetLeft)}` : "?"} doc ${document.documentElement.scrollWidth}${isFullscreen() ? " - schermvullend" : ""}`;
+    }
     function toggleDebug() {
       if (debugBox) { debugBox.remove(); debugBox = null; return; }
       debugBox = h("pre", { class: "pl-debug" });
@@ -525,6 +543,7 @@ export default {
           isYT ? `staat ${v._state} (-1 start, 3 laden, 1 speelt, 2 pauze, 5 klaar) - gordijn ${stage.classList.contains("is-curtain") ? "ja" : "nee"} - tikken ${stage.classList.contains("needs-tap") ? "ja" : "nee"}`
             : `readyState ${v.readyState} - netwerk ${v.networkState} - fout ${v.error ? v.error.code : "geen"}`,
           `scherm ${innerWidth}x${innerHeight} - ${navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 70)}`,
+          layoutLine(),
           ...(isYT ? v.log : []),
         ];
         debugBox.textContent = lines.join("\n");

@@ -4,7 +4,7 @@
 
 .pl { position: fixed; inset: 0; background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: manipulation; animation: fadeIn 0.5s ease both; }
 .pl:not(.is-ui):not(.is-paused) { cursor: none; }
-.pl-video { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); width: calc(100% - var(--safe-l) - var(--safe-r)); height: 100%; object-fit: contain; background: #000; }
+.pl-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 
 /* Laden */
 .pl-spinner { position: absolute; inset: 0; z-index: 2; display: none; place-items: center; pointer-events: none; background: radial-gradient(circle, rgba(0, 0, 0, 0.45), transparent 60%); }
@@ -134,8 +134,11 @@
 }
 
 /* YouTube: de iframe vult het scherm; alle klikken gaan naar onze eigen bediening */
-.pl-yt { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); background: #000; }
-.pl-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.pl-yt { position: absolute; inset: 0; background: #000; container-type: size; }
+/* Het YouTube-venster is zelf precies 16:9 en staat exact in het midden. De zwarte randen komen van ons, niet van
+   YouTube. Zo kan het beeld niet meer opschuiven als YouTube na draaien of schermvullend niet opnieuw centreert. */
+.pl-yt iframe { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(100%, 177.7778vh); height: min(100%, 56.25vw); border: 0; pointer-events: none; }
+@supports (width: 1cqw) { .pl-yt iframe { width: min(100cqw, 177.7778cqh); height: min(100cqh, 56.25cqw); } }
 
 /* YouTube startte niet vanzelf: YouTube's eigen afspeelknop moet aangeraakt kunnen worden */
 .pl.needs-tap .pl-yt iframe { pointer-events: auto; }
@@ -154,7 +157,7 @@
 .pl-ring-spin { display: block; width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.16); border-top-color: #fff; animation: spin 0.85s linear infinite; }
 
 /* Gordijn over de YouTube-speler: verbergt YouTube's eigen afspeelknop en logo tot de video speelt */
-.pl-curtain { position: absolute; top: 0; bottom: 0; left: var(--safe-l); right: var(--safe-r); z-index: 1; background: #05060a; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0s 0.5s; pointer-events: none; }
+.pl-curtain { position: absolute; inset: 0; z-index: 1; background: #05060a; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0s 0.5s; pointer-events: none; }
 .pl-curtain img { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(22px) brightness(0.42) saturate(1.1); }
 .pl.is-curtain .pl-curtain { opacity: 1; visibility: visible; transition: none; }
 .pl.is-curtain .pl-spinner { z-index: 2; }

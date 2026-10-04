@@ -323,6 +323,15 @@ export class YouTubeMedia extends EventTarget {
   }
   pause() { this._player?.pauseVideo(); }
 
+  /** Na draaien of schermvullend: YouTube laten opnieuw uitrekenen waar het beeld staat (1 pixel kleiner en weer terug). */
+  relayout() {
+    const f = this.el.querySelector("iframe");
+    if (!f || !f.offsetWidth) return;
+    const w = f.offsetWidth;
+    f.style.width = `${w - 1}px`;
+    setTimeout(() => { f.style.width = ""; }, 80);
+  }
+
   /** Alleen de YouTube-speler afbreken (voor opnieuw proberen). */
   _teardown() {
     clearInterval(this._poll);
