@@ -89,13 +89,20 @@ export function create() {
     /* ------------------------------ Profielen ---------------------------- */
     profiles: {
       async list() {
-        return unwrap(await sb.from("profiles").select("*").order("created_at"));
+        // Een beheerder mag alle profielen lezen (voor de Studio), maar hier horen alleen je eigen profielen
+        const { data } = await sb.auth.getSession();
+        const uid = data.session?.user?.id;
+        let q = sb.from("profiles").select("*").order("created_at");
+        if (uid) q = q.eq("owner_id", uid);
+        return unwrap(await q);
       },
       async create({ name, avatar_color, avatar_emoji, is_kids }, ownerId) {
         return unwrap(await sb.from("profiles").insert({ name, avatar_color, avatar_emoji, is_kids, owner_id: ownerId }).select().single());
       },
       async update(id, patch) {
-        return unwrap(await sb.from("profiles").update(patch).eq("id", id).select().single());
+        const rows = unwrap(await sb.from("profiles").update(patch).eq("id", id).select());
+        if (!rows.length) throw new Error("Dit profiel kon niet worden opgeslagen. Het bestaat niet meer of hoort bij een ander account. Laad de pagina opnieuw.");
+        return rows[0];
       },
       async remove(id) { unwrap(await sb.from("profiles").delete().eq("id", id)); },
     },
